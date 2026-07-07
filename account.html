@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會員中心｜Spook Automobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { gold: '#E5FE00', goldHover: '#C1D600', darkBg: '#090909', cardBg: '#141414', inputBg: '#1F1F1F', border: '#2A2A2A', textMuted: '#A0A0A0' }
+          }
+        }
+      }
+    }
+    const SUPABASE_URL = "https://jqrstoljzmmowxvnelxa.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnN0b2xqem1tb3d4dm5lbHhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzYzOTcsImV4cCI6MjA5ODg1MjM5N30.U5TX90CkkgVXR3woxQLFdHRNg6f6faneRGrpZAxwPpY";
+    const _supabase = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+  </script>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="min-h-screen flex flex-col relative">
+  <div id="bgParallaxLayer"></div>
+
+  <header class="border-b border-brand-border bg-brand-darkBg/95 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 py-3">
+    <div class="relative flex justify-between items-center">
+      <a href="index.html" class="flex items-center shrink-0">
+        <img src="assets/spook-logo.svg" class="h-6 sm:h-8 lg:h-10 w-auto" alt="品牌標誌">
+      </a>
+      <nav class="hidden lg:flex items-center space-x-8 text-sm font-medium absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <a href="index.html" class="site-nav-link">首頁</a>
+        <a href="services.html" class="site-nav-link">服務項目</a>
+        <a href="about.html" class="site-nav-link">關於我們</a>
+        <a href="configurator.html" class="site-nav-link">線上選配工具</a>
+        <a href="contact.html" class="site-nav-link">聯絡我們</a>
+      </nav>
+      <div class="flex items-center space-x-2">
+        <a href="account.html" id="memberNavLink" class="member-nav-link active hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-brand-gold hover:text-white hover:bg-brand-cardBg transition">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+          <span class="member-nav-label">會員登入</span>
+        </a>
+        <a href="configurator.html" class="hidden sm:flex px-4 py-2 rounded-lg text-xs font-bold tracking-wider bg-brand-gold hover:bg-brand-goldHover text-black items-center space-x-1.5">
+          <span>立即開始選配</span>
+        </a>
+        <button onclick="toggleMobileNav()" class="lg:hidden p-2 rounded-lg border border-brand-border text-brand-textMuted hover:text-white" aria-label="開啟選單">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobileNavMenu" class="hidden lg:hidden mt-3 pb-1 flex flex-col space-y-3 text-sm font-medium border-t border-brand-border pt-3">
+      <a href="index.html" class="site-nav-link">首頁</a>
+      <a href="services.html" class="site-nav-link">服務項目</a>
+      <a href="about.html" class="site-nav-link">關於我們</a>
+      <a href="configurator.html" class="site-nav-link">線上選配工具</a>
+      <a href="contact.html" class="site-nav-link">聯絡我們</a>
+      <a href="account.html" class="member-nav-link site-nav-link active flex items-center space-x-1.5">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+        <span class="member-nav-label">會員登入</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="flex-grow">
+    <section class="max-w-3xl mx-auto px-6 md:px-8 py-16">
+
+      <!-- 未登入：登入／註冊表單 -->
+      <div id="authSection">
+        <div class="text-center mb-8">
+          <span class="inline-block text-[11px] font-mono tracking-widest text-brand-gold uppercase border border-brand-gold/30 bg-brand-gold/10 px-3 py-1 rounded-full">Member Center</span>
+          <h1 class="mt-6 text-2xl md:text-3xl font-black text-white">會員中心</h1>
+          <p class="mt-3 text-sm text-brand-textMuted">登入即可保存您的選配紀錄，下次回來直接接續編輯。</p>
+        </div>
+
+        <div class="bg-brand-cardBg p-6 md:p-8 rounded-2xl border border-brand-border max-w-md mx-auto">
+          <div class="flex border-b border-brand-border mb-6 text-sm font-semibold">
+            <button onclick="switchAuthTab('login')" id="authTabBtn-login" class="flex-1 pb-3 text-white border-b-2 border-brand-gold">登入</button>
+            <button onclick="switchAuthTab('signup')" id="authTabBtn-signup" class="flex-1 pb-3 text-brand-textMuted border-b-2 border-transparent">註冊新帳號</button>
+          </div>
+
+          <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs text-brand-textMuted mb-1.5">電子信箱</label>
+              <input required type="email" id="loginEmail" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+            </div>
+            <div>
+              <label class="block text-xs text-brand-textMuted mb-1.5">密碼</label>
+              <input required type="password" id="loginPassword" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+            </div>
+            <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-gradient-to-r from-brand-gold to-lime-300 hover:brightness-110 text-black font-bold rounded-xl text-sm transition">登入</button>
+            <p id="loginStatusMsg" class="text-xs text-center hidden"></p>
+          </form>
+
+          <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+            <div>
+              <label class="block text-xs text-brand-textMuted mb-1.5">您的稱呼</label>
+              <input required type="text" id="signupName" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+            </div>
+            <div>
+              <label class="block text-xs text-brand-textMuted mb-1.5">電子信箱</label>
+              <input required type="email" id="signupEmail" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+            </div>
+            <div>
+              <label class="block text-xs text-brand-textMuted mb-1.5">密碼（至少 6 位數）</label>
+              <input required type="password" minlength="6" id="signupPassword" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+            </div>
+            <button type="submit" id="signupSubmitBtn" class="w-full py-3 bg-gradient-to-r from-brand-gold to-lime-300 hover:brightness-110 text-black font-bold rounded-xl text-sm transition">建立帳號</button>
+            <p id="signupStatusMsg" class="text-xs text-center hidden"></p>
+          </form>
+        </div>
+      </div>
+
+      <!-- 已登入：會員資訊 + 已儲存配置 -->
+      <div id="profileSection" class="hidden space-y-8">
+        <div class="bg-brand-cardBg p-6 md:p-8 rounded-2xl border border-brand-border">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold font-black text-lg" id="profileAvatarInitial">S</div>
+              <div>
+                <h2 id="profileName" class="text-lg font-bold text-white">會員</h2>
+                <p id="profileEmail" class="text-xs text-brand-textMuted mt-0.5"></p>
+              </div>
+            </div>
+            <button onclick="handleLogout()" class="px-4 py-2 border border-brand-border hover:border-brand-gold text-white font-bold rounded-xl text-xs transition self-start sm:self-auto">登出</button>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-brand-border">
+            <div class="text-center">
+              <div class="text-[11px] text-brand-textMuted uppercase tracking-widest">會員等級</div>
+              <div id="profileLevel" class="text-xl font-black text-brand-gold mt-1">Bronze</div>
+            </div>
+            <div class="text-center">
+              <div class="text-[11px] text-brand-textMuted uppercase tracking-widest">累積積分</div>
+              <div id="profilePoints" class="text-xl font-black text-white mt-1">0</div>
+            </div>
+          </div>
+          <div class="mt-5 pt-5 border-t border-brand-border">
+            <div class="flex justify-between items-center text-[11px] text-brand-textMuted mb-1.5">
+              <span id="levelProgressLabel">距離下一等級還差 0 分</span>
+              <span id="levelProgressPercent">0%</span>
+            </div>
+            <div class="w-full h-1.5 bg-brand-inputBg rounded-full overflow-hidden">
+              <div id="levelProgressBar" class="h-full bg-gradient-to-r from-brand-gold to-lime-300" style="width: 0%"></div>
+            </div>
+            <p class="text-[11px] text-brand-textMuted mt-2">儲存選配紀錄 +10 分・送出選配需求聯絡專人 +20 分・Bronze 0 分／Silver 150 分／Gold 500 分</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-bold tracking-widest text-brand-gold uppercase">已儲存的選配紀錄</h3>
+            <a href="configurator.html" class="text-xs font-bold text-brand-gold hover:text-white transition">前往新增選配 →</a>
+          </div>
+          <div id="savedConfigsList" class="space-y-3">
+            <div class="text-brand-textMuted text-xs py-8 text-center border border-dashed border-brand-border rounded-2xl">載入中...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-brand-border bg-brand-cardBg/60">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-8 text-xs text-brand-textMuted">
+      <div class="md:col-span-2 space-y-3">
+        <img src="assets/spook-logo.svg" class="h-8 w-auto" alt="品牌標誌">
+        <p class="leading-relaxed max-w-sm">專注於原廠無損車用音響升級，結合隱藏化聲學結構設計與精密 RTA 校正工藝，為每位車主打造獨一無二的座艙聽感。</p>
+      </div>
+      <div class="space-y-2">
+        <div class="text-white font-bold mb-2">網站導覽</div>
+        <a href="index.html" class="block hover:text-brand-gold transition">首頁</a>
+        <a href="services.html" class="block hover:text-brand-gold transition">服務項目</a>
+        <a href="about.html" class="block hover:text-brand-gold transition">關於我們</a>
+        <a href="configurator.html" class="block hover:text-brand-gold transition">線上選配工具</a>
+        <a href="contact.html" class="block hover:text-brand-gold transition">聯絡我們</a>
+      </div>
+      <div class="space-y-2">
+        <div class="text-white font-bold mb-2">聯絡資訊</div>
+        <p>台南市善化區北仔店167號</p>
+        <p>IG：@spook.automobile</p>
+        <p>spook.automobiles@gmail.com</p>
+      </div>
+    </div>
+    <div class="border-t border-brand-border/60 py-4 text-center text-[11px] text-neutral-500">
+      © 2026 Spook Automobile. All Rights Reserved.
+    </div>
+  </footer>
+
+  <script src="assets/site.js"></script>
+  <script>
+    function switchAuthTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+      document.getElementById('signupForm').classList.toggle('hidden', isLogin);
+      document.getElementById('authTabBtn-login').className = isLogin ? 'flex-1 pb-3 text-white border-b-2 border-brand-gold' : 'flex-1 pb-3 text-brand-textMuted border-b-2 border-transparent';
+      document.getElementById('authTabBtn-signup').className = !isLogin ? 'flex-1 pb-3 text-white border-b-2 border-brand-gold' : 'flex-1 pb-3 text-brand-textMuted border-b-2 border-transparent';
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const btn = document.getElementById('loginSubmitBtn');
+      const statusMsg = document.getElementById('loginStatusMsg');
+      btn.disabled = true; btn.innerText = '登入中...';
+      try {
+        if (!_supabase) throw new Error('資料庫連線尚未設定');
+        const { error } = await _supabase.auth.signInWithPassword({
+          email: document.getElementById('loginEmail').value.trim(),
+          password: document.getElementById('loginPassword').value
+        });
+        if (error) throw error;
+        await renderAccountState();
+      } catch (err) {
+        statusMsg.className = 'text-xs text-center text-red-400';
+        statusMsg.innerText = '登入失敗：' + err.message;
+        statusMsg.classList.remove('hidden');
+      } finally {
+        btn.disabled = false; btn.innerText = '登入';
+      }
+    }
+
+    async function handleSignup(event) {
+      event.preventDefault();
+      const btn = document.getElementById('signupSubmitBtn');
+      const statusMsg = document.getElementById('signupStatusMsg');
+      btn.disabled = true; btn.innerText = '建立中...';
+      try {
+        if (!_supabase) throw new Error('資料庫連線尚未設定');
+        const displayName = document.getElementById('signupName').value.trim();
+        const { data, error } = await _supabase.auth.signUp({
+          email: document.getElementById('signupEmail').value.trim(),
+          password: document.getElementById('signupPassword').value,
+          options: { data: { display_name: displayName } }
+        });
+        if (error) throw error;
+        if (data.session) {
+          await renderAccountState();
+        } else {
+          statusMsg.className = 'text-xs text-center text-green-400';
+          statusMsg.innerText = '註冊成功！請至您的信箱完成驗證後再登入。';
+          statusMsg.classList.remove('hidden');
+        }
+      } catch (err) {
+        statusMsg.className = 'text-xs text-center text-red-400';
+        statusMsg.innerText = '註冊失敗：' + err.message;
+        statusMsg.classList.remove('hidden');
+      } finally {
+        btn.disabled = false; btn.innerText = '建立帳號';
+      }
+    }
+
+    async function handleLogout() {
+      if (!_supabase) return;
+      await _supabase.auth.signOut();
+      await renderAccountState();
+    }
+
+    // 等級門檻需與 Supabase 的 compute_member_level 觸發器保持一致：Bronze 0／Silver 150／Gold 500
+    const MEMBER_LEVEL_TIERS = [
+      { name: 'Bronze', min: 0 },
+      { name: 'Silver', min: 150 },
+      { name: 'Gold', min: 500 }
+    ];
+    function renderLevelProgress(points) {
+      const label = document.getElementById('levelProgressLabel');
+      const percentEl = document.getElementById('levelProgressPercent');
+      const bar = document.getElementById('levelProgressBar');
+      const currentIndex = MEMBER_LEVEL_TIERS.reduce((idx, tier, i) => points >= tier.min ? i : idx, 0);
+      const nextTier = MEMBER_LEVEL_TIERS[currentIndex + 1];
+      if (!nextTier) {
+        label.innerText = '已達最高等級 Gold！';
+        percentEl.innerText = '100%';
+        bar.style.width = '100%';
+        return;
+      }
+      const currentTier = MEMBER_LEVEL_TIERS[currentIndex];
+      const span = nextTier.min - currentTier.min;
+      const progressed = points - currentTier.min;
+      const pct = Math.max(0, Math.min(100, Math.round((progressed / span) * 100)));
+      label.innerText = `距離 ${nextTier.name} 還差 ${nextTier.min - points} 分`;
+      percentEl.innerText = `${pct}%`;
+      bar.style.width = `${pct}%`;
+    }
+
+    async function loadSavedConfigs(userId) {
+      const list = document.getElementById('savedConfigsList');
+      if (!_supabase) return;
+      try {
+        const { data, error } = await _supabase.from('saved_configurations').select('*').eq('user_id', userId).order('updated_at', { ascending: false });
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          list.innerHTML = '<div class="text-brand-textMuted text-xs py-8 text-center border border-dashed border-brand-border rounded-2xl">您尚未儲存任何選配紀錄，到選配工具挑選喜歡的配置後按下「儲存目前配置」即可保存在這裡。</div>';
+          return;
+        }
+        list.innerHTML = data.map(cfg => `
+          <div class="bg-brand-cardBg p-5 rounded-2xl border border-brand-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="text-white font-bold text-sm">${cfg.car_brand || ''} ${cfg.car_model || ''} ${cfg.car_year ? '(' + cfg.car_year + ')' : ''}</div>
+              <div class="text-[11px] text-brand-textMuted mt-1">最後更新：${cfg.updated_at ? new Date(cfg.updated_at).toLocaleString('zh-TW', { hour12: false }) : ''}</div>
+              <div class="text-sm font-bold text-brand-gold mt-1">NT$ ${Number(cfg.total_price || 0).toLocaleString()}</div>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <a href="configurator.html?load=${cfg.id}" class="px-4 py-2 bg-brand-gold hover:bg-brand-goldHover text-black font-bold text-xs rounded-xl transition">繼續編輯</a>
+              <button onclick="deleteSavedConfig('${cfg.id}')" class="px-4 py-2 border border-brand-border hover:border-red-500 text-red-400 font-bold text-xs rounded-xl transition">刪除</button>
+            </div>
+          </div>`).join('');
+      } catch (err) {
+        list.innerHTML = `<div class="text-red-400 text-xs py-8 text-center border border-dashed border-brand-border rounded-2xl">載入失敗，請確認 Supabase 是否已建立 saved_configurations 資料表。<br>${err.message}</div>`;
+      }
+    }
+
+    async function deleteSavedConfig(id) {
+      if (!confirm('確定要刪除這筆選配紀錄嗎？')) return;
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) return;
+      await _supabase.from('saved_configurations').delete().eq('id', id);
+      await loadSavedConfigs(session.user.id);
+    }
+
+    async function renderAccountState() {
+      if (!_supabase) return;
+      const { data: { session } } = await _supabase.auth.getSession();
+      const authSection = document.getElementById('authSection');
+      const profileSection = document.getElementById('profileSection');
+      if (session && session.user) {
+        authSection.classList.add('hidden');
+        profileSection.classList.remove('hidden');
+        const user = session.user;
+        const displayName = (user.user_metadata && user.user_metadata.display_name) || (user.email ? user.email.split('@')[0] : '會員');
+        document.getElementById('profileName').innerText = displayName;
+        document.getElementById('profileEmail').innerText = user.email || '';
+        document.getElementById('profileAvatarInitial').innerText = displayName.charAt(0).toUpperCase();
+        try {
+          const { data: profile } = await _supabase.from('profiles').select('member_level, points').eq('id', user.id).single();
+          if (profile) {
+            const points = Number(profile.points || 0);
+            document.getElementById('profileLevel').innerText = profile.member_level || 'Bronze';
+            document.getElementById('profilePoints').innerText = points.toLocaleString();
+            renderLevelProgress(points);
+          }
+        } catch (err) { /* profiles 表尚未建立時，維持預設顯示 */ }
+        await loadSavedConfigs(user.id);
+      } else {
+        authSection.classList.remove('hidden');
+        profileSection.classList.add('hidden');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', renderAccountState);
+  </script>
+</body>
+</html>
