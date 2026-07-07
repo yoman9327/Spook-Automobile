@@ -57,3 +57,18 @@ body {
   background: #E5FE00;
   border-radius: 2px;
 }
+
+/* 全站所有互動按鈕（含 <button> 與按鈕樣式的 <a>）滑鼠移上去時的懸浮動畫。
+   排除純文字導覽連結（.site-nav-link）與被明確標記 no-hover-lift 的元素，避免鏈接列表也跟著浮動。 */
+button:not(.no-hover-lift),
+a:not(.site-nav-link):not(.no-hover-lift) {
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+button:not(.no-hover-lift):hover,
+a:not(.site-nav-link):not(.no-hover-lift):hover {
+  transform: translateY(-2px);
+}
+button:not(.no-hover-lift):active,
+a:not(.site-nav-link):not(.no-hover-lift):active {
+  transform: translateY(0);
+}
