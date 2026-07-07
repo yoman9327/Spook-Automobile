@@ -309,7 +309,10 @@
           <div class="flex justify-between text-xs text-brand-textMuted"><span>硬體升級與精準 RTA 工時</span><span>含原廠保固對應</span></div>
           <div class="flex justify-between items-baseline"><span class="text-sm font-semibold text-gray-300">預估投資總計</span><span id="sideTotalPrice" class="text-2xl font-black text-brand-gold">NT$ 0</span></div>
         </div>
-        <button onclick="generateOfficialPDF()" id="pdfTriggerBtn" class="w-full py-4 bg-gradient-to-r from-brand-gold to-lime-300 hover:brightness-110 text-black font-bold rounded-xl shadow-xl text-sm transition">確認配置・下載官方 PDF 報價單</button>
+        <div class="space-y-3">
+          <button onclick="openConfigContactModal()" id="contactExpertBtn" class="w-full py-4 bg-gradient-to-r from-brand-gold to-lime-300 hover:brightness-110 text-black font-bold rounded-xl shadow-xl text-sm transition">確認配置，聯絡專人</button>
+          <button onclick="generateOfficialPDF()" id="pdfTriggerBtn" class="w-full py-3 border border-brand-border hover:border-brand-gold text-white font-bold rounded-xl text-sm transition">下載 PDF 報價單</button>
+        </div>
       </div>
     </div>
   </main>
@@ -351,6 +354,39 @@
         <button onclick="closeAdminAuth()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
         <button onclick="executeAdminAuthCheck()" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">登入</button>
       </div>
+    </div>
+  </div>
+
+  <div id="configContactModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-brand-cardBg border border-brand-border p-6 rounded-2xl max-w-md w-full mx-4 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="text-base font-bold text-white">確認配置・聯絡專人</h3>
+        <span class="text-xs text-brand-gold" id="configContactCarLabel"></span>
+      </div>
+      <p class="text-[11px] text-brand-textMuted leading-relaxed -mt-2">送出後，我們會保存您目前選配的所有項目與預估金額，並由專人主動與您聯繫確認細節與安裝時間。</p>
+      <form id="configContactForm" onsubmit="submitConfigContactForm(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-brand-textMuted mb-1.5">姓名 <span class="text-brand-gold">*</span></label>
+          <input required type="text" id="ccName" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+        </div>
+        <div>
+          <label class="block text-xs text-brand-textMuted mb-1.5">聯絡電話 <span class="text-brand-gold">*</span></label>
+          <input required type="tel" id="ccPhone" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+        </div>
+        <div>
+          <label class="block text-xs text-brand-textMuted mb-1.5">電子信箱</label>
+          <input type="email" id="ccEmail" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+        </div>
+        <div>
+          <label class="block text-xs text-brand-textMuted mb-1.5">其他需求說明</label>
+          <textarea id="ccMessage" rows="3" placeholder="有其他想告訴我們的內容嗎？" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold resize-none"></textarea>
+        </div>
+        <div class="flex space-x-2 pt-2">
+          <button type="button" onclick="closeConfigContactModal()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
+          <button type="submit" id="ccSubmitBtn" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">送出並聯絡專人</button>
+        </div>
+        <p id="ccStatusMsg" class="text-xs text-center hidden"></p>
+      </form>
     </div>
   </div>
 
@@ -474,7 +510,7 @@
     };
 
     let carDb = [], partDb = [], messageDb = [];
-    let currentCategory = 'front_tweeter';
+    let currentCategory = '';
     let currentAdminPartCategory = 'all';
     let clientSelections = {};
     let activeModalCarId = null;
@@ -483,7 +519,7 @@
     // 取得目前客戶選定的車輛 ID（用來判斷哪些品項專屬於此車型）
     function getCurrentCarId() {
       const b = document.getElementById('clientBrandSelect')?.value || '', m = document.getElementById('clientModelSelect')?.value || '', y = document.getElementById('clientYearSelect')?.value || '';
-      const car = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
+      const car = carDb.find(c => c.brand === b && c.model === m && c.year === y);
       return car ? car.id : null;
     }
     // 判斷某品項是否適用於指定車型：未設定 compatible_car_ids（或為空陣列）＝全車系通用
@@ -563,21 +599,21 @@
     function renderClientCarSelectors() {
       const brandSel = document.getElementById('clientBrandSelect'); if(!brandSel) return;
       const prev = brandSel.value, brands = [...new Set(carDb.map(c => c.brand))];
-      brandSel.innerHTML = brands.map(b => `<option value="${b}" ${b===prev?'selected':''}>${b}</option>`).join(''); handleBrandChange();
+      brandSel.innerHTML = `<option value="">請選擇品牌</option>` + brands.map(b => `<option value="${b}" ${b===prev?'selected':''}>${b}</option>`).join(''); handleBrandChange();
     }
     function handleBrandChange() {
       const b = document.getElementById('clientBrandSelect').value, models = [...new Set(carDb.filter(c => c.brand === b).map(c => c.model))];
-      document.getElementById('clientModelSelect').innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join(''); handleModelChange();
+      document.getElementById('clientModelSelect').innerHTML = `<option value="">請選擇型號</option>` + models.map(m => `<option value="${m}">${m}</option>`).join(''); handleModelChange();
     }
     function handleModelChange() {
       const b = document.getElementById('clientBrandSelect').value, m = document.getElementById('clientModelSelect').value, years = carDb.filter(c => c.brand === b && c.model === m).map(c => c.year);
-      document.getElementById('clientYearSelect').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join(''); handleYearChange();
+      document.getElementById('clientYearSelect').innerHTML = `<option value="">請選擇年份</option>` + years.map(y => `<option value="${y}">${y}</option>`).join(''); handleYearChange();
     }
-    
+
     function handleYearChange() {
       const b = document.getElementById('clientBrandSelect').value, m = document.getElementById('clientModelSelect').value, y = document.getElementById('clientYearSelect').value;
-      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
-      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y);
+      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : [];
 
       const tabsContainer = document.getElementById('dynamicCategoryTabs');
       if (tabsContainer) {
@@ -586,7 +622,7 @@
           return `<button onclick="switchCategory('${cat}')" id="tab-${cat}" class="pb-3 font-semibold border-b-2 border-transparent text-brand-textMuted hover:text-white tracking-wide shrink-0">${label}</button>`;
         }).join('');
       }
-      if (!allowedCategories.includes(currentCategory)) currentCategory = allowedCategories[0] || 'front_tweeter';
+      currentCategory = allowedCategories[0] || '';
       revalidateSelectionsForCar();
       switchCategory(currentCategory);
       updatePriceAndSummarySidePanel();
@@ -604,6 +640,7 @@
 
     function renderClientOptionCards() {
       const grid = document.getElementById('optionsGrid'); if (!grid) return;
+      if (!currentCategory) { grid.innerHTML = '<div class="text-brand-textMuted text-xs py-8 col-span-2 text-center">請先於上方 Step 01 選擇您的車輛品牌、型號與年份。</div>'; return; }
       const carId = getCurrentCarId();
       const parts = partDb.filter(p => p.category === currentCategory && isPartCompatible(p, carId));
       if (parts.length === 0) { grid.innerHTML = '<div class="text-brand-textMuted text-xs py-8 col-span-2 text-center">此車型的此聲學分區目前尚未上架適用的選配品項。</div>'; return; }
@@ -629,8 +666,8 @@
     function updatePriceAndSummarySidePanel() {
       const b = document.getElementById('clientBrandSelect')?.value || '', m = document.getElementById('clientModelSelect')?.value || '', y = document.getElementById('clientYearSelect')?.value || '';
       const titleEl = document.getElementById('sideCarTitle'); if (titleEl) titleEl.innerText = (b || m) ? `${b} - ${m} (${y})` : "未選取車型";
-      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
-      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y);
+      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : [];
 
       const list = document.getElementById('sideItemList'); if (!list) return;
       list.innerHTML = ''; let total = 0;
@@ -664,8 +701,8 @@
     // 依目前選定車型，回傳該車支援的聲學分區清單
     function getAllowedCategoriesForCurrentCar() {
       const b = document.getElementById('clientBrandSelect')?.value || '', m = document.getElementById('clientModelSelect')?.value || '', y = document.getElementById('clientYearSelect')?.value || '';
-      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
-      return targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y);
+      return targetCar && targetCar.categories ? targetCar.categories : [];
     }
 
     function updateAcousticWireframeMap() {
@@ -994,16 +1031,86 @@
       await fetchSysData();
     }
 
+    // 彙整客戶目前已選配置為可讀文字，供「聯絡專人」表單一併送出保存
+    function buildConfigSummaryText() {
+      const b = document.getElementById('clientBrandSelect').value || '', m = document.getElementById('clientModelSelect').value || '', y = document.getElementById('clientYearSelect').value || '';
+      const allowedCategories = getAllowedCategoriesForCurrentCar();
+      const lines = [];
+      let total = 0;
+      allowedCategories.forEach(key => {
+        if (key === 'extras') return;
+        const item = clientSelections[key];
+        if (item) { total += Number(item.price); lines.push(`・${(ACOUSTIC_CATEGORIES[key]||key).split(' ')[0]}：${item.name}（NT$ ${Number(item.price).toLocaleString()}）`); }
+      });
+      if (allowedCategories.includes('extras') && clientSelections.extras) {
+        clientSelections.extras.forEach(item => { total += Number(item.price); lines.push(`・專屬配件：${item.name}（NT$ ${Number(item.price).toLocaleString()}）`); });
+      }
+      const header = `【客戶已選配置】\n車輛型號：${b} ${m} (${y})`;
+      const body = lines.length ? lines.join('\n') : '（尚未選擇任何配置項目）';
+      const totalLine = `預估投資總計：NT$ ${total.toLocaleString()}`;
+      return `${header}\n${body}\n${totalLine}`;
+    }
+
+    function openConfigContactModal() {
+      const b = document.getElementById('clientBrandSelect').value || '', m = document.getElementById('clientModelSelect').value || '', y = document.getElementById('clientYearSelect').value || '';
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y);
+      if (!targetCar) { alert('請先於 Step 01 選擇您的車輛品牌、型號與年份，才能聯絡專人確認配置。'); return; }
+      const labelEl = document.getElementById('configContactCarLabel');
+      if (labelEl) labelEl.innerText = `${b} ${m} (${y})`;
+      document.getElementById('configContactModal')?.classList.remove('hidden', 'opacity-0');
+    }
+    function closeConfigContactModal() {
+      document.getElementById('configContactModal')?.classList.add('opacity-0');
+      setTimeout(() => document.getElementById('configContactModal')?.classList.add('hidden'), 300);
+    }
+
+    async function submitConfigContactForm(event) {
+      event.preventDefault();
+      const btn = document.getElementById('ccSubmitBtn');
+      const statusMsg = document.getElementById('ccStatusMsg');
+      const b = document.getElementById('clientBrandSelect').value || '', m = document.getElementById('clientModelSelect').value || '', y = document.getElementById('clientYearSelect').value || '';
+      const configSummary = buildConfigSummaryText();
+      const userMsg = document.getElementById('ccMessage').value.trim();
+      const fullMessage = userMsg ? `${configSummary}\n\n【客戶留言】\n${userMsg}` : configSummary;
+      const payload = {
+        name: document.getElementById('ccName').value.trim(),
+        phone: document.getElementById('ccPhone').value.trim(),
+        email: document.getElementById('ccEmail').value.trim(),
+        car_model: `${b} ${m} (${y})`,
+        message: fullMessage
+      };
+      btn.disabled = true;
+      btn.innerText = '傳送中...';
+      try {
+        if (!_supabase) throw new Error('資料庫連線尚未設定');
+        const { error } = await _supabase.from('contact_messages').insert([payload]);
+        if (error) throw error;
+        statusMsg.className = 'text-xs text-center text-green-400';
+        statusMsg.innerText = '已收到您的選配需求，專人將盡快與您聯繫！';
+        document.getElementById('configContactForm').reset();
+        setTimeout(() => closeConfigContactModal(), 1500);
+      } catch (err) {
+        statusMsg.className = 'text-xs text-center text-red-400';
+        statusMsg.innerText = '送出失敗：' + err.message;
+      } finally {
+        statusMsg.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerText = '送出並聯絡專人';
+      }
+    }
+
     function generateOfficialPDF() {
+      const b = document.getElementById('clientBrandSelect').value || '', m = document.getElementById('clientModelSelect').value || '', y = document.getElementById('clientYearSelect').value || '';
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y);
+      if (!targetCar) { alert('請先於 Step 01 選擇您的車輛品牌、型號與年份，才能產生報價單。'); return; }
+
       const btn = document.getElementById('pdfTriggerBtn');
       const origText = btn.innerHTML;
       btn.innerHTML = '<span>⏳ 正在精準對齊並渲染 PDF...</span>';
       btn.disabled = true;
 
-      const b = document.getElementById('clientBrandSelect').value || '', m = document.getElementById('clientModelSelect').value || '', y = document.getElementById('clientYearSelect').value || '';
       document.getElementById('pdfCarModelLabel').innerText = `${b} ${m} (${y})`;
-      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
-      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+      const allowedCategories = targetCar.categories || [];
 
       const dateStr = new Date().toISOString().split('T')[0];
       document.getElementById('pdfQuoteDate').innerText = `DATE: ${dateStr}`;
