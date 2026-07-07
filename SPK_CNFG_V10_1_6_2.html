@@ -104,20 +104,20 @@
       <div class="relative overflow-hidden bg-brand-cardBg p-6 rounded-2xl border border-brand-border shadow-xl space-y-4">
         <div id="step1CarImageLayer" class="absolute inset-0 bg-cover bg-center opacity-0 transition-opacity duration-500 ease-out pointer-events-none"></div>
         <div class="relative z-10 flex justify-between items-center">
-          <h2 class="text-xs font-bold tracking-widest text-brand-gold uppercase">Step 01 / 選擇升級車型</h2>
-          <span class="text-[11px] text-brand-textMuted">對應原車專屬無損接頭與聲學參數</span>
+          <h2 class="text-xs font-bold tracking-widest text-brand-gold uppercase [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">Step 01 / 選擇升級車型</h2>
+          <span class="text-[11px] text-brand-textMuted [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">對應原車專屬無損接頭與聲學參數</span>
         </div>
         <div class="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs text-brand-textMuted mb-1.5">車輛品牌 (Brand)</label>
+            <label class="block text-xs text-brand-textMuted mb-1.5 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">車輛品牌 (Brand)</label>
             <select id="clientBrandSelect" onchange="handleBrandChange()" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold cursor-pointer"></select>
           </div>
           <div>
-            <label class="block text-xs text-brand-textMuted mb-1.5">車款型號 (Model)</label>
+            <label class="block text-xs text-brand-textMuted mb-1.5 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">車款型號 (Model)</label>
             <select id="clientModelSelect" onchange="handleModelChange()" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold cursor-pointer"></select>
           </div>
           <div>
-            <label class="block text-xs text-brand-textMuted mb-1.5">生產年份/世代 (Year)</label>
+            <label class="block text-xs text-brand-textMuted mb-1.5 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">生產年份/世代 (Year)</label>
             <select id="clientYearSelect" onchange="handleYearChange()" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold cursor-pointer"></select>
           </div>
         </div>
@@ -685,12 +685,12 @@
       updateStep1CarImage(targetCar);
     }
 
-    // 依目前選定車型，於 Step01 卡片顯示對應車款圖片（作法與商品卡片一致：cover 滿版 + 深色漸層遮罩維持文字可讀性）
+    // 依目前選定車型，於 Step01 卡片顯示對應車款圖片（作法與商品卡片一致：cover 滿版 + 品牌螢光綠由下往上漸層維持文字可讀性）
     function updateStep1CarImage(car) {
       const layer = document.getElementById('step1CarImageLayer');
       if (!layer) return;
       if (car && car.image_url) {
-        layer.style.backgroundImage = `linear-gradient(to bottom right, rgba(20,20,20,0.55), rgba(20,20,20,0.88)), url('${car.image_url}')`;
+        layer.style.backgroundImage = `linear-gradient(to top, rgba(229,254,0,0.3), rgba(229,254,0,0.1) 40%, rgba(229,254,0,0) 70%), url('${car.image_url}')`;
         layer.style.opacity = '1';
       } else {
         layer.style.backgroundImage = 'none';
