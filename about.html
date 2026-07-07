@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>關於我們｜Spook Automobile</title>
+  </title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { gold: '#E5FE00', goldHover: '#C1D600', darkBg: '#090909', cardBg: '#141414', inputBg: '#1F1F1F', border: '#2A2A2A', textMuted: '#A0A0A0' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="min-h-screen flex flex-col relative">
+  <div id="bgParallaxLayer"></div>
+
+  <header class="border-b border-brand-border bg-brand-darkBg/95 backdrop-blur-md sticky top-0 z-40 px-6 py-3">
+    <div class="relative flex justify-between items-center">
+      <a href="index.html" class="flex items-center shrink-0">
+        <img src="assets/spook-logo.svg" class="h-9 md:h-10 w-auto" alt="品牌標誌">
+      </a>
+      <nav class="hidden lg:flex items-center space-x-8 text-sm font-medium absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <a href="index.html" class="site-nav-link">首頁</a>
+        <a href="services.html" class="site-nav-link">服務項目</a>
+        <a href="about.html" class="site-nav-link active">關於我們</a>
+        <a href="SPK_CNFG_V10_1_6_2.html" class="site-nav-link">線上選配工具</a>
+        <a href="contact.html" class="site-nav-link">聯絡我們</a>
+      </nav>
+      <div class="flex items-center space-x-2">
+        <a href="SPK_CNFG_V10_1_6_2.html" class="hidden sm:flex px-4 py-2 rounded-lg text-xs font-bold tracking-wider bg-brand-gold hover:bg-brand-goldHover text-black items-center space-x-1.5">
+          <span>立即開始選配</span>
+        </a>
+        <button onclick="toggleMobileNav()" class="lg:hidden p-2 rounded-lg border border-brand-border text-brand-textMuted hover:text-white" aria-label="開啟選單">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobileNavMenu" class="hidden lg:hidden mt-3 pb-1 flex flex-col space-y-3 text-sm font-medium border-t border-brand-border pt-3">
+      <a href="index.html" class="site-nav-link">首頁</a>
+      <a href="services.html" class="site-nav-link">服務項目</a>
+      <a href="about.html" class="site-nav-link active">關於我們</a>
+      <a href="SPK_CNFG_V10_1_6_2.html" class="site-nav-link">線上選配工具</a>
+      <a href="contact.html" class="site-nav-link">聯絡我們</a>
+    </div>
+  </header>
+
+  <main class="flex-grow">
+
+    <!-- 頁首 -->
+    <section class="max-w-7xl mx-auto px-6 md:px-8 pt-16 pb-12 text-center">
+      <span class="inline-block text-[11px] font-mono tracking-widest text-brand-gold uppercase border border-brand-gold/30 bg-brand-gold/10 px-3 py-1 rounded-full">About Us</span>
+      <h1 class="mt-6 text-3xl md:text-5xl font-black text-white leading-tight">關於我們</h1>
+      <p class="mt-4 max-w-2xl mx-auto text-sm md:text-base text-brand-textMuted leading-relaxed">
+        我們相信，真正的頂級音響升級不該以犧牲原廠質感為代價。
+      </p>
+    </section>
+
+    <!-- 品牌故事 -->
+    <section class="max-w-6xl mx-auto px-6 md:px-8 pb-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <img src="assets/store-exterior.png" alt="店面外觀" class="w-full aspect-video object-cover rounded-2xl border border-brand-border">
+      <div class="space-y-4">
+        <span class="text-[11px] font-bold tracking-widest text-brand-gold uppercase">Our Story</span>
+        <h2 class="text-2xl font-black text-white">行業二代對汽車音響的新見解</h2>
+        <p class="text-sm text-brand-textMuted leading-relaxed">
+          洸銳汽車影音 始於2016年，為國內第一批引進並專注於車用安卓主機與360度環景升級的先驅，基於家父對車用音響的熱愛，同時也提供後級音響升級的服務。
+        </p>
+        <p class="text-sm text-brand-textMuted leading-relaxed">
+          隨著市場整體需求和風貌的變化，年輕世代以 Spook Automobile 之名決定重新定義「下一個10年」，專注於汽車音響行業樣貌的簡潔、年輕化，
+          正如名稱「Spook」一般，不易捕捉，但令人印象深刻。
+        </p>
+     
+      </div>
+    </section>
+
+    <!-- 核心理念 -->
+    <section class="border-t border-brand-border bg-brand-cardBg/40">
+      <div class="max-w-6xl mx-auto px-6 md:px-8 py-20">
+        <div class="text-center mb-12">
+          <span class="text-[11px] font-bold tracking-widest text-brand-gold uppercase">Our Values</span>
+          <h2 class="text-2xl md:text-3xl font-black text-white mt-2">核心理念</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border text-center space-y-3">
+            <div class="w-12 h-12 mx-auto rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold font-black">異</div>
+            <h3 class="text-white font-bold text-sm">千姿百態，萬象叢生</h3>
+            <p class="text-xs text-brand-textMuted leading-relaxed">我們堅信聲音/音樂是主觀的，每個人都有自己獨特的聽覺體驗，因此升級的重點在於客戶。</p>
+          </div>
+          <div class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border text-center space-y-3">
+            <div class="w-12 h-12 mx-auto rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold font-black">精</div>
+            <h3 class="text-white font-bold text-sm">精雕細刻，一絲不苟</h3>
+            <p class="text-xs text-brand-textMuted leading-relaxed">主理人熱愛各種曲風，不僅憑經驗調音，更以行動參加各式調音課程，讓每位客戶都能獲得到最佳體驗。</p>
+          </div>
+          <div class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border text-center space-y-3">
+            <div class="w-12 h-12 mx-auto rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold font-black">客製</div>
+            <h3 class="text-white font-bold text-sm">因車而異</h3>
+            <p class="text-xs text-brand-textMuted leading-relaxed">依照每輛車的空間結構與車主需求量身規劃配置方案，拒絕一套設計走遍全車系。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="border-t border-brand-border">
+      <div class="max-w-4xl mx-auto px-6 md:px-8 py-20 text-center">
+        <h2 class="text-2xl md:text-3xl font-black text-white">歡迎親自到店體驗</h2>
+        <p class="mt-4 text-sm text-brand-textMuted">預約參觀我們的展示中心，實際感受無損升級後的聲學表現。</p>
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="contact.html" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-brand-gold to-lime-300 hover:brightness-110 text-black font-bold rounded-xl shadow-xl text-sm transition">預約到店諮詢</a>
+          <a href="SPK_CNFG_V10_1_6_2.html" class="w-full sm:w-auto px-8 py-4 border border-brand-border hover:border-brand-gold text-white font-bold rounded-xl text-sm transition">先線上選配估價</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-brand-border bg-brand-cardBg/60">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-8 text-xs text-brand-textMuted">
+      <div class="md:col-span-2 space-y-3">
+        <img src="assets/spook-logo.svg" class="h-8 w-auto" alt="品牌標誌">
+        <p class="leading-relaxed max-w-sm">專注於原廠無損車用音響升級，結合隱藏化聲學結構設計與精密 RTA 校正工藝，為每位車主打造獨一無二的座艙聽感。</p>
+      </div>
+      <div class="space-y-2">
+        <div class="text-white font-bold mb-2">網站導覽</div>
+        <a href="index.html" class="block hover:text-brand-gold transition">首頁</a>
+        <a href="services.html" class="block hover:text-brand-gold transition">服務項目</a>
+        <a href="about.html" class="block hover:text-brand-gold transition">關於我們</a>
+        <a href="SPK_CNFG_V10_1_6_2.html" class="block hover:text-brand-gold transition">線上選配工具</a>
+        <a href="contact.html" class="block hover:text-brand-gold transition">聯絡我們</a>
+      </div>
+      <div class="space-y-2">
+        <div class="text-white font-bold mb-2">聯絡資訊</div>
+        <p>台南市善化區北仔店167號</p>
+        <p>IG：@spook.automobile</p>
+        <p>spook.automobiles@gmail.com</p>
+      </div>
+    </div>
+    <div class="border-t border-brand-border/60 py-4 text-center text-[11px] text-neutral-500">
+      © 2026 客製化汽車音響工作室. All Rights Reserved.
+    </div>
+  </footer>
+
+  <script src="assets/site.js"></script>
+</body>
+</html>

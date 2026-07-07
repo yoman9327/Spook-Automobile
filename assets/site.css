@@ -1,0 +1,59 @@
+/* ==================== 全站共用樣式：品牌基底、捲軸、滑鼠微視差背景層 ==================== */
+body {
+  background-color: #090909;
+  color: #F5F5F5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #090909; }
+::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #E5FE00; }
+
+/* 滑鼠微視差背景層：尺寸略大於視窗，靠 JS 以 transform 平移做出跟隨滑鼠的效果 */
+#bgParallaxLayer {
+  position: fixed;
+  top: -6%;
+  left: -6%;
+  width: 112%;
+  height: 112%;
+  background-image: linear-gradient(rgba(9, 9, 9, 0.85), rgba(9, 9, 9, 0.85)), url(neon-green-car-19-09-2024-1726735965-Picsart-AiImageEnhancer.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 頁面主視覺區塊用的深色網紋圖片區（尚無正式照片前的預留樣式） */
+.placeholder-media {
+  position: relative;
+  background: repeating-linear-gradient(135deg, #1a1a1a 0px, #1a1a1a 12px, #141414 12px, #141414 24px);
+  border: 1px solid #2A2A2A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B6B6B;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.site-nav-link {
+  position: relative;
+  color: #A0A0A0;
+  transition: color 0.25s ease;
+}
+.site-nav-link:hover { color: #F5F5F5; }
+.site-nav-link.active { color: #E5FE00; }
+.site-nav-link.active::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -6px;
+  height: 2px;
+  background: #E5FE00;
+  border-radius: 2px;
+}

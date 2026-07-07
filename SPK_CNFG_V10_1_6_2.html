@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurator｜Spook Automobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { gold: '#E5FE00', goldHover: '#C1D600', darkBg: '#090909', cardBg: '#141414', inputBg: '#1F1F1F', border: '#2A2A2A', textMuted: '#A0A0A0' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="assets/site.css">
+  <style>
+    /* PDF 渲染隱藏區 */
+    #pdf-render-zone { position: absolute; left: -9999px; top: 0; z-index: -10; }
+    #pdf-render-zone.rendering-active { position: fixed !important; left: 0 !important; top: 0 !important; z-index: -9999 !important; opacity: 1 !important; pointer-events: none; display: block !important; }
+
+    /* ==================== 【關鍵修復】聲學結構圖節點光效（鎖死原心、防止右移） ==================== */
+    .acoustic-node { cursor: pointer; }
+    .acoustic-node circle, .acoustic-node rect {
+      transform-box: fill-box !important;
+      transform-origin: center !important;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .acoustic-node.active-tab circle, .acoustic-node.active-tab rect {
+      animation: acousticCenterPulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .acoustic-node.upgraded circle, .acoustic-node.upgraded rect {
+      fill: #E5FE00 !important;
+      stroke: #FFFFFF !important;
+      stroke-width: 2px;
+      filter: drop-shadow(0 0 6px rgba(229, 254, 0, 0.8));
+    }
+    @keyframes acousticCenterPulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(229, 254, 0, 0.4)); }
+      50% { transform: scale(1.22); filter: drop-shadow(0 0 10px rgba(229, 254, 0, 1)); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(229, 254, 0, 0.4)); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative">
+  <div id="bgParallaxLayer"></div>
+
+  <div id="sysStatusBanner" class="bg-brand-cardBg border-b border-brand-border text-[11px] text-brand-textMuted py-1.5 px-6 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <span id="sysIndicatorDot" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+      <span id="sysStatusText" class="font-medium">資料庫連線與資料同步中...</span>
+    </div>
+    <span class="font-mono text-[10px] text-neutral-500 tracking-wider">REALTIME ACTIVE</span>
+  </div>
+
+  <header class="border-b border-brand-border bg-brand-darkBg/95 backdrop-blur-md sticky top-0 z-40 px-6 py-3">
+    <div class="relative flex justify-between items-center">
+      <a href="index.html" class="flex items-center shrink-0">
+        <img src="assets/logo.svg" class="h-9 md:h-10 w-auto" alt="品牌標誌">
+      </a>
+      <nav class="hidden lg:flex items-center space-x-8 text-sm font-medium absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <a href="index.html" class="site-nav-link">首頁</a>
+        <a href="services.html" class="site-nav-link">服務項目</a>
+        <a href="about.html" class="site-nav-link">關於我們</a>
+        <a href="SPK_CNFG_V10_1_6_2.html" class="site-nav-link active">線上選配工具</a>
+        <a href="contact.html" class="site-nav-link">聯絡我們</a>
+      </nav>
+      <div class="flex items-center space-x-2">
+        <button onclick="openAdminAuth()" id="adminNavBtn" class="hidden sm:flex w-9 h-9 rounded-lg text-brand-textMuted hover:text-brand-gold hover:bg-brand-cardBg transition items-center justify-center" aria-label="管理主控台" title="管理主控台">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+        <button onclick="toggleMobileNav()" class="lg:hidden p-2 rounded-lg border border-brand-border text-brand-textMuted hover:text-white" aria-label="開啟選單">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobileNavMenu" class="hidden lg:hidden mt-3 pb-1 flex flex-col space-y-3 text-sm font-medium border-t border-brand-border pt-3">
+      <a href="index.html" class="site-nav-link">首頁</a>
+      <a href="services.html" class="site-nav-link">服務項目</a>
+      <a href="about.html" class="site-nav-link">關於我們</a>
+      <a href="SPK_CNFG_V10_1_6_2.html" class="site-nav-link active">線上選配工具</a>
+      <a href="contact.html" class="site-nav-link">聯絡我們</a>
+      <button onclick="openAdminAuth()" class="sm:hidden w-9 h-9 rounded-lg text-brand-textMuted hover:text-brand-gold hover:bg-brand-cardBg transition flex items-center justify-center" aria-label="管理主控台" title="管理主控台">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
+    
+    <div id="mainConfiguratorPanel" class="w-full lg:w-2/3 space-y-6 transition-all duration-300">
+      
+      <div class="relative overflow-hidden bg-brand-cardBg p-6 rounded-2xl border border-brand-border shadow-xl space-y-4">
+        <div id="step1CarImageLayer" class="absolute inset-0 bg-cover bg-center opacity-0 transition-opacity duration-500 ease-out pointer-events-none"></div>
+        <div class="relative z-10 flex justify-between items-center">
+          <h2 class="text-xs font-bold tracking-widest text-brand-gold uppercase">Step 01 / 選擇升級車型</h2>
+          <span class="text-[11px] text-brand-textMuted">對應原車專屬無損接頭與聲學參數</span>
+        </div>
+        <div class="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-brand-textMuted mb-1.5">車輛品牌 (Brand)</label>
+            <select id="clientBrandSelect" onchange="handleBrandChange()" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold cursor-pointer"></select>
+          </div>
+          <div>
+            <label class="block text-xs text-brand-textMuted mb-1.5">車款型號 (Model)</label>
+            <select id="clientModelSelect" onchange="handleModelChange()" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold cursor-pointer"></select>
+          </div>
+          <div>
+            <label class="block text-xs text-brand-textMuted mb-1.5">生產年份/世代 (Year)</label>
+            <select id="clientYearSelect" onchange="handleYearChange()" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold cursor-pointer"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-brand-cardBg p-5 rounded-2xl border border-brand-border flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner relative overflow-hidden">
+        <div class="w-full md:w-1/3 space-y-2 text-left z-10">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-brand-gold animate-ping"></span>
+            <span class="text-[11px] font-mono tracking-widest text-brand-gold uppercase">OEM+ Invisible Soundstage</span>
+          </div>
+          <h3 class="text-sm font-bold text-white tracking-wide">3D 艙內聲學發聲矩陣佈局</h3>
+          <p class="text-xs text-brand-textMuted leading-relaxed">
+            依所選車型動態顯示可升級之聲學分區；圖示指示當前分區，<span class="text-brand-gold font-semibold">金色標記</span>代表已載入客製化單體或制震工程。
+          </p>
+        </div>
+
+        <div class="w-full md:w-2/3 flex justify-center py-1">
+          <svg class="w-full max-w-[340px] h-auto select-none" viewBox="0 0 400 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 車身外框（俯視車輛輪廓：圓潤車頭、方正車尾，車艙區段最寬） -->
+            <path d="M20,90 C20,64 38,44 66,40 C100,35 135,28 168,26 C180,25.5 190,24 201,24 C213,24 224,25.5 236,26 C260,28 288,33 315,42 C345,52 368,60 378,74 C382,80 382,84 382,90 C382,96 382,100 378,106 C368,120 345,128 315,138 C288,147 260,152 236,154 C224,154.5 213,156 201,156 C190,156 180,154.5 168,154 C135,152 100,145 66,140 C38,136 20,116 20,90 Z" stroke="#3A3A3A" stroke-width="1.5" fill="#0D0D0D"/>
+            <!-- 前擋風玻璃分隔線 -->
+            <path d="M150,29 C158,58 158,122 150,151" stroke="#242424" stroke-width="1.2" fill="none"/>
+            <!-- 後擋風玻璃分隔線 -->
+            <path d="M255,31 C248,60 248,120 255,149" stroke="#242424" stroke-width="1.2" fill="none"/>
+            <!-- 車頭中軸線（線束示意） -->
+            <line x1="26" y1="90" x2="378" y2="90" stroke="#2A2A2A" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <!-- 前輪（俯視輪胎：沿車身長軸方向為長邊，符合實際比例與滾動方向） -->
+            <rect x="83" y="28" width="26" height="16" rx="6" fill="#020202" stroke="#4A4A4A" stroke-width="1.2"/>
+            <rect x="83" y="136" width="26" height="16" rx="6" fill="#020202" stroke="#4A4A4A" stroke-width="1.2"/>
+            <!-- 後輪 -->
+            <rect x="301" y="34" width="26" height="16" rx="6" fill="#020202" stroke="#4A4A4A" stroke-width="1.2"/>
+            <rect x="301" y="130" width="26" height="16" rx="6" fill="#020202" stroke="#4A4A4A" stroke-width="1.2"/>
+            <!-- 後視鏡 -->
+            <ellipse cx="145" cy="19" rx="5" ry="3" fill="#1A1A1A" stroke="#3A3A3A" stroke-width="1"/>
+            <ellipse cx="145" cy="161" rx="5" ry="3" fill="#1A1A1A" stroke="#3A3A3A" stroke-width="1"/>
+
+            <!-- 以下聲學節點座標已對齊新車身：前聲場全數位於中線(x=201)之前，後聲場全數位於中線之後，
+                 重低音／DSP 落在後輪拱(x=301-327)之後的行李廂區，避免與輪胎重疊 -->
+            <g id="node-front_dash" class="acoustic-node" onclick="switchCategory('front_dash')">
+              <circle cx="96" cy="70" r="5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><circle cx="96" cy="110" r="5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-center" class="acoustic-node" onclick="switchCategory('center')">
+              <circle cx="96" cy="90" r="6" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-front_tweeter" class="acoustic-node" onclick="switchCategory('front_tweeter')">
+              <circle cx="122" cy="50" r="5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><circle cx="122" cy="130" r="5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-front_midrange" class="acoustic-node" onclick="switchCategory('front_midrange')">
+              <circle cx="145" cy="44" r="6" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><circle cx="145" cy="136" r="6" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-front_2way" class="acoustic-node" onclick="switchCategory('front_2way')">
+              <rect x="162" y="36" width="12" height="12" rx="2" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><rect x="162" y="132" width="12" height="12" rx="2" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-front_woofer" class="acoustic-node" onclick="switchCategory('front_woofer')">
+              <circle cx="190" cy="40" r="7.5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><circle cx="190" cy="140" r="7.5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-rear_tweeter" class="acoustic-node" onclick="switchCategory('rear_tweeter')">
+              <circle cx="215" cy="42" r="5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><circle cx="215" cy="138" r="5" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-rear_midrange" class="acoustic-node" onclick="switchCategory('rear_midrange')">
+              <circle cx="240" cy="46" r="6" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><circle cx="240" cy="134" r="6" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-rear_coaxial" class="acoustic-node" onclick="switchCategory('rear_coaxial')">
+              <rect x="257" y="44" width="12" height="12" rx="2" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><rect x="257" y="124" width="12" height="12" rx="2" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-rear_woofer" class="acoustic-node" onclick="switchCategory('rear_woofer')">
+              <circle cx="288" cy="56" r="7" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/><circle cx="288" cy="124" r="7" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-subwoofer" class="acoustic-node" onclick="switchCategory('subwoofer')">
+              <rect x="336" y="70" width="18" height="40" rx="3" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+            <g id="node-dsp" class="acoustic-node" onclick="switchCategory('dsp')">
+              <rect x="358" y="78" width="20" height="24" rx="2" fill="#2A2A2A" stroke="#555555" stroke-width="1.5"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xs font-bold tracking-widest text-brand-gold uppercase">Step 02 / 訂製聲學配置方案</h2>
+          <span class="text-[11px] text-neutral-400 font-mono">依照當前車型動態顯示可選部位</span>
+        </div>
+        <div id="dynamicCategoryTabs" class="flex border-b border-brand-border space-x-6 overflow-x-auto text-sm select-none pb-0.5"></div>
+        <div id="optionsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 min-h-[160px]"></div>
+      </div>
+    </div>
+
+    <div id="mainAdminPanel" class="w-full hidden space-y-6 opacity-0 transition-all duration-300">
+      <div class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-white tracking-wide">系統管理主控台</h2>
+          <p class="text-xs text-brand-textMuted mt-1">您修改的售價與規格將即時儲存至資料庫，並自動同步至所有瀏覽中的客戶端畫面。</p>
+        </div>
+        <div class="flex space-x-2 w-full md:w-auto">
+          <button onclick="resetToSystemDefaults()" class="px-3 py-2 bg-red-950/40 text-red-400 border border-red-900/50 rounded-xl text-xs hover:bg-red-900/40 font-semibold">還原系統預設配置</button>
+          <button onclick="closeAdminView()" class="px-4 py-2 bg-white text-black font-bold rounded-xl text-xs hover:bg-gray-200">退出後台管理</button>
+        </div>
+      </div>
+
+      <div class="flex space-x-3 border-b border-brand-border pb-2">
+        <button onclick="switchAdminSubTab('cars')" id="admin-tab-btn-cars" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-gold text-black">🚗 支援車款與部位設定</button>
+        <button onclick="switchAdminSubTab('parts')" id="admin-tab-btn-parts" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-cardBg text-brand-textMuted">🔊 音響選配品項管理</button>
+        <button onclick="switchAdminSubTab('messages')" id="admin-tab-btn-messages" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-cardBg text-brand-textMuted">📨 聯絡訊息管理</button>
+      </div>
+
+      <div id="admin-subpanel-cars" class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300 min-w-[750px]">
+            <thead class="text-xs text-brand-textMuted uppercase border-b border-brand-border">
+              <tr><th class="py-3 px-2 w-20">圖片</th><th class="py-3 px-3 w-1/5">汽車品牌</th><th class="py-3 px-3 w-1/4">車款型號</th><th class="py-3 px-3 w-1/6">適用年份</th><th class="py-3 px-3 w-1/4">已啟用聲學部位</th><th class="py-3 px-3 text-right">管理操作</th></tr>
+            </thead>
+            <tbody id="adminCarTableBody" class="divide-y divide-brand-border/60"></tbody>
+          </table>
+        </div>
+        <div class="bg-brand-darkBg p-4 rounded-xl border border-brand-border space-y-3">
+          <div class="text-xs font-bold text-brand-gold">＋ 新增支援車系與開放部位：</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input type="text" id="addCarBrand" placeholder="品牌 (例: McLaren)" class="w-full bg-brand-inputBg border border-brand-border rounded-lg p-2 text-xs text-white">
+            <input type="text" id="addCarModel" placeholder="車型 (例: 720S Coupe)" class="w-full bg-brand-inputBg border border-brand-border rounded-lg p-2 text-xs text-white">
+            <input type="text" id="addCarYear" placeholder="年份 (例: 2020-2024)" class="w-full bg-brand-inputBg border border-brand-border rounded-lg p-2 text-xs text-white">
+          </div>
+          <div class="flex items-center gap-3">
+            <img id="addCarImagePreview" class="hidden w-12 h-12 object-cover rounded-lg border border-brand-border" />
+            <input type="file" id="addCarImage" accept="image/*" onchange="handleAddCarImagePreview(event)" class="text-xs text-brand-textMuted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-gold/10 file:text-brand-gold hover:file:bg-brand-gold hover:file:text-black">
+          </div>
+          <div class="text-[11px] text-neutral-400">勾選該車支援開放配置的部位：</div>
+          <div id="addCarCategoryCheckboxes" class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs text-gray-300"></div>
+          <button onclick="executeAddCar()" id="addCarSubmitBtn" class="w-full py-2 bg-brand-gold hover:bg-brand-goldHover text-black font-bold text-xs rounded-lg h-[34px]">加入車型至資料庫</button>
+        </div>
+      </div>
+
+      <div id="admin-subpanel-parts" class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6 hidden">
+        <div class="flex flex-wrap gap-2" id="adminPartCategoryTabs"></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300 min-w-[800px]">
+            <thead class="text-xs text-brand-textMuted uppercase border-b border-brand-border">
+              <tr><th class="py-3 px-2 w-20">圖片</th><th class="py-3 px-2 w-28">聲學分類</th><th class="py-3 px-3 w-1/5">品項名稱</th><th class="py-3 px-3 w-1/3">規格/特點描述</th><th class="py-3 px-3 w-24">建議售價 ($)</th><th class="py-3 px-2 w-32">適用車型</th><th class="py-3 px-2 text-right">管理操作</th></tr>
+            </thead>
+            <tbody id="adminPartTableBody" class="divide-y divide-brand-border/60"></tbody>
+          </table>
+        </div>
+        <div class="bg-brand-darkBg p-4 rounded-xl border border-brand-border space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
+            <select id="addPartCat" class="w-full bg-brand-inputBg border border-brand-border rounded-lg p-2 text-xs text-white"></select>
+            <input type="text" id="addPartName" placeholder="品項名稱" class="w-full bg-brand-inputBg border border-brand-border rounded-lg p-2 text-xs text-white">
+            <input type="text" id="addPartDesc" placeholder="規格與優勢描述" class="w-full bg-brand-inputBg border border-brand-border rounded-lg p-2 text-xs text-white">
+            <input type="number" id="addPartPrice" placeholder="售價 ($)" class="w-full bg-brand-inputBg border border-brand-border rounded-lg p-2 text-xs text-white">
+          </div>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2">
+              <img id="addPartImagePreview" class="hidden w-12 h-12 object-cover rounded-lg border border-brand-border" />
+              <input type="file" id="addPartImage" accept="image/*" onchange="handleAddPartImagePreview(event)" class="text-xs text-brand-textMuted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-gold/10 file:text-brand-gold hover:file:bg-brand-gold hover:file:text-black">
+            </div>
+            <button onclick="executeAddPart()" id="addPartSubmitBtn" class="px-6 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black font-bold text-xs rounded-lg ml-auto">＋ 加入選配品項</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-subpanel-messages" class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-brand-textMuted">來自「聯絡我們」表單的客戶諮詢需求，依送出時間新到舊排序。</p>
+          <button onclick="fetchContactMessages()" class="px-3 py-1.5 bg-brand-cardBg border border-brand-border hover:border-brand-gold text-brand-textMuted hover:text-white rounded-lg text-xs font-semibold shrink-0">🔄 重新整理</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300 min-w-[900px]">
+            <thead class="text-xs text-brand-textMuted uppercase border-b border-brand-border">
+              <tr><th class="py-3 px-2 w-32">送出時間</th><th class="py-3 px-2 w-24">姓名</th><th class="py-3 px-2 w-28">電話</th><th class="py-3 px-2 w-40">Email</th><th class="py-3 px-2 w-32">車輛品牌／型號</th><th class="py-3 px-3">需求說明</th><th class="py-3 px-2 text-right">管理操作</th></tr>
+            </thead>
+            <tbody id="adminMessageTableBody" class="divide-y divide-brand-border/60"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="sideSummaryPanel" class="w-full lg:w-1/3">
+      <div class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border sticky top-24 space-y-6 shadow-2xl">
+        <div>
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold tracking-widest text-brand-gold uppercase bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">Official Specification</span>
+            <span class="text-xs text-brand-textMuted font-mono" id="currentDateLabel"></span>
+          </div>
+          <h2 id="sideCarTitle" class="text-lg font-bold mt-2 text-white leading-snug">載入中...</h2>
+          <p class="text-xs text-brand-textMuted mt-0.5">專屬 OEM+ 客製化音響升級明細</p>
+        </div>
+        <div class="border-t border-b border-brand-border py-4 space-y-4 min-h-[180px] max-h-[360px] overflow-y-auto text-sm" id="sideItemList"></div>
+        <div class="space-y-2 pt-1">
+          <div class="flex justify-between text-xs text-brand-textMuted"><span>硬體升級與精準 RTA 工時</span><span>含原廠保固對應</span></div>
+          <div class="flex justify-between items-baseline"><span class="text-sm font-semibold text-gray-300">預估投資總計</span><span id="sideTotalPrice" class="text-2xl font-black text-brand-gold">NT$ 0</span></div>
+        </div>
+        <button onclick="generateOfficialPDF()" id="pdfTriggerBtn" class="w-full py-4 bg-gradient-to-r from-brand-gold to-lime-300 hover:brightness-110 text-black font-bold rounded-xl shadow-xl text-sm transition">確認配置・下載官方 PDF 報價單</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="carCategoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-brand-cardBg border border-brand-border p-6 rounded-2xl max-w-lg w-full mx-4 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="text-base font-bold text-white" id="modalCarTitle">設定車款聲學部位</h3>
+        <span class="text-xs text-brand-gold">請勾選該車款開放的選配分類</span>
+      </div>
+      <div id="modalCheckboxesContainer" class="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto text-xs py-2"></div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeCarCategoryModal()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
+        <button onclick="saveCarCategories()" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">確認儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="partCompatibilityModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-brand-cardBg border border-brand-border p-6 rounded-2xl max-w-lg w-full mx-4 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="text-base font-bold text-white" id="modalPartTitle">設定品項專屬車型</h3>
+        <span class="text-xs text-brand-gold">未勾選任何車型 = 全車系通用</span>
+      </div>
+      <p class="text-[11px] text-brand-textMuted leading-relaxed -mt-2">若此品項僅適用於特定車型（例如專屬尺寸的原位無損單體），請勾選對應車款；客戶端只會在勾選的車型上看到此品項。全部不勾選則代表所有車型皆可選配。</p>
+      <div id="partCompatCheckboxesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto text-xs py-2"></div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closePartCompatibilityModal()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
+        <button onclick="savePartCompatibility()" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">確認儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-brand-cardBg border border-brand-border p-6 rounded-2xl max-w-sm w-full mx-4 space-y-4 shadow-2xl">
+      <div class="text-center"><h3 class="text-base font-bold text-white">後台管理安全驗證</h3><p class="text-xs text-brand-textMuted mt-1">請輸入管理密碼以存取設定主控台</p></div>
+      <input type="password" id="authPasswordInput" placeholder="請輸入密碼" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white text-center focus:border-brand-gold tracking-widest">
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeAdminAuth()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
+        <button onclick="executeAdminAuthCheck()" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">登入</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pdf-render-zone">
+    <div id="pdf-document" class="w-[794px] bg-white text-gray-900 p-12 font-sans box-border m-0 shrink-0">
+      <div class="w-full h-2 bg-[#E5FE00] mb-8"></div>
+      <div class="flex justify-between items-end border-b-2 border-gray-900 pb-5 mb-8">
+        <div>
+<svg width="150" height="30" viewBox="0 0 189.22 38.65" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+  <g>
+    <line x1="54.03" y1="0" x2="54.03" y2="38.65" stroke="#1a1a1a" stroke-width="1" stroke-miterlimit="10"/>
+    <path fill="#1a1a1a" d="M41.25,11.38L31.88.78c-.29-.33-.72-.52-1.17-.52H10.93c-.45,0-.88.19-1.17.52L.39,11.38c-.22.25-.35.57-.35.9L0,36.82c0,1.03,1.13,1.72,2.13,1.3l7.05-2.92c.62-.26,1.35-.1,1.78.39l2,2.26c.57.64,1.6.69,2.23.11l2.96-2.72c1.48-1.36,3.9-1.35,5.37.02l2.77,2.59c.66.62,1.77.53,2.31-.18l1.65-2.18c.42-.55,1.2-.75,1.86-.47l7.33,3.07c1,.42,2.14-.27,2.14-1.3V12.28c0-.33-.12-.65-.35-.9ZM15.44,16.29c-1.75,1.7-6.39,4.97-9.96-3.34-.24-.56.34-1.11.94-.9l8.76,3.12c.49.18.63.76.26,1.12ZM36.11,12.96c-3.57,8.3-8.21,5.03-9.96,3.34-.37-.35-.23-.94.26-1.12l8.76-3.12c.6-.21,1.18.34.94.9Z"/>
+    <g>
+      <path fill="#1a1a1a" d="M73.2,10.7c3.67.19,8.83.44,8.82,3.74,0,3.76-4.31,4.65-8.93,4.65-4.54,0-8.33-.55-8.9-4.47-.01-.09.06-.18.15-.18h5.11c.05,0,.1.03.13.07.61.96,1.94,1.21,3.51,1.21s3.55-.26,3.55-1.28c0-.58-1.6-.67-3.66-.76-3.67-.19-8.83-.44-8.82-3.73,0-3.76,4.31-4.66,8.93-4.66,4.54.03,8.33.53,8.91,4.48.01.09-.06.18-.15.18h-5.11c-.05,0-.1-.03-.13-.07-.61-.98-1.94-1.21-3.51-1.21s-3.55.24-3.55,1.28c0,.58,1.6.66,3.66.75Z"/>
+      <path fill="#1a1a1a" d="M96.07,5.63h-12.52c-.09,0-.15.07-.15.15v12.85c0,.09.07.15.15.15h4.82c.09,0,.15-.07.15-.15v-2.9c0-.09.07-.15.15-.15h7.39c2.71.04,5.01-2.26,4.97-4.97.04-2.72-2.26-5-4.97-4.97ZM95.71,11.22c-.22.32-.61.49-1,.49h-6.04c-.09,0-.15-.07-.15-.15v-1.93c0-.09.07-.15.15-.15h6.11c.3,0,.57.11.78.33.23.22.33.48.33.79,0,.23-.06.44-.19.63Z"/>
+      <path fill="#1a1a1a" d="M146.19,14.42v4.19c0,.09-.07.15-.15.15h-4.82c-.09,0-.15-.07-.15-.15V5.76c0-.09.07-.15.15-.15h4.82c.09,0,.15.07.15.15v4.19c0,.09.07.15.15.15h2.03s.08-.01.1-.04l4.74-4.41s.07-.04.1-.04h6.29c.14,0,.21.17.11.26l-6.43,6.2c-.06.06-.06.16,0,.22l6.43,6.2c.1.1.03.26-.11.26h-6.29s-.08-.01-.1-.04l-4.74-4.41s-.07-.04-.1-.04h-2.03c-.09,0-.15.07-.15.15Z"/>
+      <path fill="#1a1a1a" d="M111.23,5.28c-4.95,0-9.01,1.44-8.99,6.42v.96c-.02,4.97,4.03,6.41,8.99,6.42,4.94,0,9-1.45,8.98-6.42v-.96c0-4.97-4.02-6.42-8.98-6.42ZM115.66,12.66c-1.49,1.52-5.4,4.4-8.75-2.47-.25-.5.32-1.02.91-.84l7.53,2.31c.48.15.64.66.31,1Z"/>
+      <path fill="#1a1a1a" d="M130.57,5.28c-4.95,0-9.01,1.44-8.99,6.42v.96c-.02,4.97,4.03,6.41,8.99,6.42,4.94,0,9-1.45,8.98-6.42v-.96c0-4.97-4.02-6.42-8.98-6.42ZM135,10.19c-3.36,6.87-7.26,3.99-8.75,2.47-.33-.34-.17-.85.31-1l7.53-2.31c.6-.18,1.16.33.91.84Z"/>
+    </g>
+  </g>
+  <g>
+    <path fill="#808E00" d="M74.79,29c-.19,2.6-2.47,3.38-5.25,3.38-2.89,0-5.28-.84-5.27-3.76v-.56c-.01-2.91,2.38-3.75,5.27-3.76,2.78,0,5.06.79,5.25,3.39h-3.08c-.28-.76-1.14-.94-2.17-.94-1.23.02-2.27.24-2.25,1.5v.19c-.02,1.26,1.03,1.49,2.25,1.5,1.03,0,1.89-.18,2.17-.94h3.08Z"/>
+    <path fill="#808E00" d="M86.05,28.06v.56c.01,2.92-2.36,3.76-5.26,3.76-2.9,0-5.28-.85-5.27-3.76v-.56c-.01-2.92,2.36-3.76,5.27-3.76,2.9,0,5.26.85,5.26,3.76ZM83.04,28.24c.02-1.26-1.03-1.49-2.25-1.5-1.23.02-2.28.25-2.26,1.5v.19c-.02,1.26,1.03,1.49,2.26,1.51,1.23-.02,2.27-.25,2.25-1.51v-.19Z"/>
+    <path fill="#808E00" d="M94.45,24.48h3.01v7.71h-3.38l-4.14-4.71v4.71h-3.01v-7.71h4.14l3.38,4.08v-4.08Z"/>
+    <path fill="#808E00" d="M99.2,24.49h9.4v2.44h-6.4v.94h5.65v2.25h-5.65v2.07h-3.01v-7.71Z"/>
+    <path fill="#808E00" d="M112.46,24.48v7.71h-3.01v-7.71h3.01Z"/>
+    <path fill="#808E00" d="M118.58,27.96h5.24v4.42h-1.5l-.15-1.2c-.89.88-2.25,1.2-3.56,1.2-2.9-.01-5.28-.85-5.27-3.76v-.56c-.01-2.92,2.36-3.76,5.27-3.76,2.67,0,4.88.73,5.21,3.1h-3.2c-.19-.26-.46-.43-.82-.52-.36-.09-.76-.14-1.2-.14-1.23.02-2.28.25-2.26,1.5v.19c-.02,1.27,1.03,1.49,2.26,1.5,1.19,0,1.94-.07,2.4-.65h-2.42v-1.32Z"/>
+    <path fill="#808E00" d="M132.33,24.48h3.01v4.14c.01,2.91-2.38,3.75-5.27,3.76-2.89,0-5.28-.84-5.27-3.76v-4.14h3.01v3.95c-.01,1.27,1.03,1.49,2.26,1.5,1.23-.02,2.27-.24,2.25-1.5v-3.95Z"/>
+    <path fill="#808E00" d="M144.12,24.49c1.59-.02,2.94,1.32,2.91,2.92,0,.58-.16,1.11-.46,1.58-.3.46-.71.82-1.22,1.06l1.68,2.16h-3.2l-1.45-1.88h-2.68v1.88h-3.01v-7.71h7.43ZM139.69,26.74v1.31h3.67c.18,0,.34-.06.46-.19.13-.13.2-.29.2-.46,0-.37-.29-.66-.66-.66h-3.67Z"/>
+    <path fill="#808E00" d="M151.39,24.49h3.58l4.14,7.71h-3.38l-.61-1.32h-3.86l-.61,1.32h-3.38l4.14-7.71ZM152.12,29h2.12l-1.06-2.28-1.06,2.28Z"/>
+    <path fill="#808E00" d="M160.67,32.2v-5.27h-3.57v-2.44h10.15v2.44h-3.57v5.27h-3.01Z"/>
+    <path fill="#808E00" d="M178,28.06v.56c.01,2.92-2.36,3.76-5.26,3.76-2.9,0-5.28-.85-5.27-3.76v-.56c-.01-2.92,2.36-3.76,5.27-3.76,2.9,0,5.26.85,5.26,3.76ZM174.99,28.24c.02-1.26-1.03-1.49-2.25-1.5-1.23.02-2.28.25-2.26,1.5v.19c-.02,1.26,1.03,1.49,2.26,1.51,1.23-.02,2.27-.25,2.25-1.51v-.19Z"/>
+    <path fill="#808E00" d="M186.3,24.49c1.59-.02,2.94,1.32,2.91,2.92,0,.58-.16,1.11-.46,1.58-.3.46-.71.82-1.22,1.06l1.68,2.16h-3.2l-1.45-1.88h-2.68v1.88h-3.01v-7.71h7.43ZM181.88,26.74v1.31h3.67c.18,0,.34-.06.46-.19.13-.13.2-.29.2-.46,0-.37-.29-.66-.66-.66h-3.67Z"/>
+  </g>
+</svg>
+          <p class="text-[9px] text-gray-500 tracking-widest uppercase font-bold">Bespoke Automotive Audio Engineering</p>
+        </div>
+        <div class="text-right">
+          <h2 class="text-xl font-bold text-gray-900 tracking-wider">官方音響客製化升級報價單</h2>
+          <p class="text-xs text-gray-500 mt-1" id="pdfQuoteNo">QUOTATION NO: Q-20260706-001</p>
+          <p class="text-xs text-gray-500" id="pdfQuoteDate">DATE: 2026-07-06</p>
+        </div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 mb-8 flex justify-between items-center">
+        <div>
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Target Vehicle Model / 升級目標車輛</span>
+          <span class="text-lg font-black text-gray-900 mt-1 block" id="pdfCarModelLabel">載入中...</span>
+        </div>
+        <div class="text-right">
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Installation Standard / 施工技術標準</span>
+          <span class="text-sm font-bold text-gray-800 mt-1 block">原位專用無損接頭 + 精準 RTA 音場校正</span>
+        </div>
+      </div>
+      <div class="mb-8 min-h-[320px]">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b-2 border-gray-800 text-xs uppercase font-bold text-gray-600 tracking-wider">
+              <th class="py-3 px-2 w-1/4">聲學區域 / 分類</th><th class="py-3 px-2 w-7/12">客製化配置項目與技術特點描述</th><th class="py-3 px-2 text-right w-2/12">小計 (NTD)</th>
+            </tr>
+          </thead>
+          <tbody id="pdfItemsTbody" class="divide-y divide-gray-200 text-sm text-gray-800"></tbody>
+        </table>
+      </div>
+      <div class="border-t-2 border-gray-900 pt-6 flex justify-end mb-16">
+        <div class="w-80 space-y-2">
+          <div class="flex justify-between text-xs text-gray-500"><span>硬體升級與車門結構制震小計：</span><span id="pdfSubtotalLabel">NT$ 0</span></div>
+          <div class="flex justify-between text-xs text-gray-500"><span>專案專用線束與 RTA 精密校正：</span><span>已包含 (Included)</span></div>
+          <div class="flex justify-between text-lg font-black text-gray-900 border-t border-gray-200 pt-3"><span>預估投資金額總計：</span><span id="pdfTotalLabel" class="text-xl text-[#808E00]">NT$ 0</span></div>
+        </div>
+      </div>
+      <div class="border-t border-gray-200 pt-6 text-xs text-gray-500 flex justify-between items-end">
+        <div class="space-y-1 w-3/5 leading-relaxed">
+          <p class="font-bold text-gray-700">專屬權益及施工保固條款：</p>
+          <p>1. 本配置單所列項目均採用專車專用無損對接線組，保證絕不破壞原車電路與原廠保固標準。</p>
+          <p>2. 全車音響升級完工均享硬體 2 年完整保固及半年內免費二次高階 3D 空間音場精密重置。</p>
+          <p>3. 本官方客製化選配報價單自開立日起 30 天內有效。</p>
+        </div>
+        <div class="w-1/3 text-center">
+          <div class="border-b border-gray-400 pb-12 mb-2"></div>
+          <span class="text-[11px] uppercase tracking-widest text-gray-400 font-semibold block">Authorized Signature / 授權確認簽章</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://jqrstoljzmmowxvnelxa.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnN0b2xqem1tb3d4dm5lbHhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzYzOTcsImV4cCI6MjA5ODg1MjM5N30.U5TX90CkkgVXR3woxQLFdHRNg6f6faneRGrpZAxwPpY";
+    const _supabase = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+    const CONFIG_ADMIN_PASSWORD = "admin888";
+    const PART_IMAGE_BUCKET = "part-images";
+    const CAR_IMAGE_BUCKET = "car-images";
+
+    async function uploadImageFile(file, bucket) {
+      if (!file) return null;
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: uploadError } = await _supabase.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+      if (uploadError) throw uploadError;
+      const { data } = _supabase.storage.from(bucket).getPublicUrl(path);
+      return data?.publicUrl || null;
+    }
+
+    async function uploadPartImageFile(file) { return uploadImageFile(file, PART_IMAGE_BUCKET); }
+    async function uploadCarImageFile(file) { return uploadImageFile(file, CAR_IMAGE_BUCKET); }
+
+    const ACOUSTIC_CATEGORIES = {
+      front_2way: '前門兩音路 (Front 2way)',
+	  front_tweeter: '前門高音 (Front Tweeter)',
+      front_midrange: '前門中音 (Front Mid)',
+      front_woofer: '前門低音 (Front Woofer)',
+      front_dash: '儀表台中/高音 (Front Dash)',
+      rear_coaxial: '後門同軸 (Rear Coaxial)',
+	  rear_tweeter: '後門高音 (Rear Tweeter)',
+      rear_midrange: '後門中音 (Rear Mid)',
+      rear_woofer: '後門低音 (Rear Woofer)',
+      center: '中置聲道單體 (Center Channel)',
+      subwoofer: '隱藏超低音系統 (Subwoofer)',
+      dsp: 'DSP 數位處理器 (DSP & Amp)',
+      extras: '隱藏式升級/配件 (Accessories)'
+    };
+
+    let carDb = [], partDb = [], messageDb = [];
+    let currentCategory = 'front_tweeter';
+    let currentAdminPartCategory = 'all';
+    let clientSelections = {};
+    let activeModalCarId = null;
+    let activeModalPartId = null;
+
+    // 取得目前客戶選定的車輛 ID（用來判斷哪些品項專屬於此車型）
+    function getCurrentCarId() {
+      const b = document.getElementById('clientBrandSelect')?.value || '', m = document.getElementById('clientModelSelect')?.value || '', y = document.getElementById('clientYearSelect')?.value || '';
+      const car = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
+      return car ? car.id : null;
+    }
+    // 判斷某品項是否適用於指定車型：未設定 compatible_car_ids（或為空陣列）＝全車系通用
+    function isPartCompatible(item, carId) {
+      if (!item || !item.compatible_car_ids || item.compatible_car_ids.length === 0) return true;
+      return item.compatible_car_ids.some(id => String(id) === String(carId));
+    }
+    // 當車型切換時，移除客戶已選但不適用於新車型的品項，避免報價單出現無法安裝的組合
+    function revalidateSelectionsForCar() {
+      const carId = getCurrentCarId();
+      Object.keys(ACOUSTIC_CATEGORIES).forEach(cat => {
+        if (cat === 'extras') {
+          if (Array.isArray(clientSelections.extras)) clientSelections.extras = clientSelections.extras.filter(item => isPartCompatible(item, carId));
+          return;
+        }
+        const sel = clientSelections[cat];
+        if (sel && !isPartCompatible(sel, carId)) {
+          const fallbackDefault = partDb.find(p => p.category === cat && Number(p.price) === 0 && isPartCompatible(p, carId));
+          clientSelections[cat] = fallbackDefault || null;
+        }
+      });
+    }
+
+    function initCategorySelectors() {
+      const partCatSel = document.getElementById('addPartCat');
+      const addCarBox = document.getElementById('addCarCategoryCheckboxes');
+      if (partCatSel) partCatSel.innerHTML = Object.entries(ACOUSTIC_CATEGORIES).map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+      if (addCarBox) addCarBox.innerHTML = Object.entries(ACOUSTIC_CATEGORIES).map(([k, l]) => `<label class="flex items-center space-x-1 py-1 text-xs text-gray-300"><input type="checkbox" name="newCarCat" value="${k}" checked class="rounded border-brand-border bg-brand-inputBg text-brand-gold"> <span>${l.split(' ')[0]}</span></label>`).join('');
+    }
+
+    async function initSystem() {
+      const dateEl = document.getElementById('currentDateLabel');
+      if (dateEl) dateEl.innerText = new Date().toISOString().split('T')[0];
+      initCategorySelectors();
+      if (!_supabase) { setSysStatus('系統載入失敗：通訊異常', 'bg-red-500'); return; }
+      await fetchSysData();
+      setupSubscriptions();
+    }
+
+    async function fetchSysData(isQuiet = false) {
+      if (isQuiet && document.activeElement && document.activeElement.tagName === 'INPUT' && !document.activeElement.id.startsWith('client')) return;
+      try {
+        let { data: carsData } = await _supabase.from('audio_cars').select('*').order('id', { ascending: true });
+        carDb = carsData || [];
+        let { data: partsData } = await _supabase.from('audio_parts').select('*').order('price', { ascending: true });
+        partDb = partsData || [];
+
+        carDb = carDb.map(c => ({ ...c, categories: c.categories || Object.keys(ACOUSTIC_CATEGORIES) }));
+        Object.keys(ACOUSTIC_CATEGORIES).forEach(cat => {
+          const def = partDb.find(p => p.category === cat && Number(p.price) === 0);
+          if (def && !clientSelections[cat]) clientSelections[cat] = def;
+        });
+        if (!clientSelections.extras) clientSelections.extras = [];
+
+        renderClientCarSelectors();
+        renderClientOptionCards();
+        updatePriceAndSummarySidePanel();
+        
+        const adminPanel = document.getElementById('mainAdminPanel');
+        if (adminPanel && !adminPanel.classList.contains('hidden')) {
+          renderAdminCarTable();
+          renderAdminPartTable();
+        }
+        setSysStatus('系統連線正常 (即時同步開啟)', 'bg-green-500');
+      } catch (err) { setSysStatus('⚠️ 資料庫連接異常', 'bg-red-500'); }
+    }
+
+    function setupSubscriptions() {
+      if (!_supabase) return;
+      _supabase.channel('public-db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'audio_cars' }, () => fetchSysData(true)).on('postgres_changes', { event: '*', schema: 'public', table: 'audio_parts' }, () => fetchSysData(true)).subscribe();
+    }
+    function setSysStatus(msg, color) {
+      const txt = document.getElementById('sysStatusText'), dot = document.getElementById('sysIndicatorDot');
+      if (txt) txt.innerText = msg; if (dot) dot.className = `w-2 h-2 rounded-full animate-pulse ${color}`;
+    }
+
+    function renderClientCarSelectors() {
+      const brandSel = document.getElementById('clientBrandSelect'); if(!brandSel) return;
+      const prev = brandSel.value, brands = [...new Set(carDb.map(c => c.brand))];
+      brandSel.innerHTML = brands.map(b => `<option value="${b}" ${b===prev?'selected':''}>${b}</option>`).join(''); handleBrandChange();
+    }
+    function handleBrandChange() {
+      const b = document.getElementById('clientBrandSelect').value, models = [...new Set(carDb.filter(c => c.brand === b).map(c => c.model))];
+      document.getElementById('clientModelSelect').innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join(''); handleModelChange();
+    }
+    function handleModelChange() {
+      const b = document.getElementById('clientBrandSelect').value, m = document.getElementById('clientModelSelect').value, years = carDb.filter(c => c.brand === b && c.model === m).map(c => c.year);
+      document.getElementById('clientYearSelect').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join(''); handleYearChange();
+    }
+    
+    function handleYearChange() {
+      const b = document.getElementById('clientBrandSelect').value, m = document.getElementById('clientModelSelect').value, y = document.getElementById('clientYearSelect').value;
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
+      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+
+      const tabsContainer = document.getElementById('dynamicCategoryTabs');
+      if (tabsContainer) {
+        tabsContainer.innerHTML = allowedCategories.map(cat => {
+          const label = ACOUSTIC_CATEGORIES[cat] || cat;
+          return `<button onclick="switchCategory('${cat}')" id="tab-${cat}" class="pb-3 font-semibold border-b-2 border-transparent text-brand-textMuted hover:text-white tracking-wide shrink-0">${label}</button>`;
+        }).join('');
+      }
+      if (!allowedCategories.includes(currentCategory)) currentCategory = allowedCategories[0] || 'front_tweeter';
+      revalidateSelectionsForCar();
+      switchCategory(currentCategory);
+      updatePriceAndSummarySidePanel();
+    }
+
+    function switchCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('#dynamicCategoryTabs button').forEach(tab => {
+        if (tab.id === `tab-${cat}`) tab.className = "pb-3 font-semibold border-b-2 border-brand-gold text-white tracking-wide shrink-0";
+        else tab.className = "pb-3 font-semibold border-b-2 border-transparent text-brand-textMuted hover:text-white tracking-wide shrink-0";
+      });
+      renderClientOptionCards();
+      updateAcousticWireframeMap();
+    }
+
+    function renderClientOptionCards() {
+      const grid = document.getElementById('optionsGrid'); if (!grid) return;
+      const carId = getCurrentCarId();
+      const parts = partDb.filter(p => p.category === currentCategory && isPartCompatible(p, carId));
+      if (parts.length === 0) { grid.innerHTML = '<div class="text-brand-textMuted text-xs py-8 col-span-2 text-center">此車型的此聲學分區目前尚未上架適用的選配品項。</div>'; return; }
+      grid.innerHTML = parts.map(item => {
+        const isSel = (currentCategory === 'extras') ? clientSelections.extras.some(e => e.id === item.id) : (clientSelections[currentCategory]?.id === item.id);
+        const hasImage = !!item.image_url;
+        const cardClass = `relative rounded-2xl border cursor-pointer transition-all duration-300 ease-out overflow-hidden min-h-[190px] flex flex-col justify-end transform-gpu ${isSel ? 'border-brand-gold scale-[1.04] shadow-2xl shadow-brand-gold/20 z-10' : 'border-brand-border hover:border-gray-600 hover:scale-[1.015]'} ${hasImage ? '' : 'bg-brand-cardBg'}`;
+        const bgStyle = hasImage ? ` style="background-image:url('${item.image_url}');background-size:cover;background-position:center;"` : '';
+        const overlay = hasImage ? `<div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/10"></div>${isSel ? '<div class="absolute inset-0 ring-2 ring-brand-gold ring-inset rounded-2xl pointer-events-none"></div>' : ''}` : (isSel ? '<div class="absolute inset-0 bg-brand-gold/5"></div>' : '');
+        const descColor = hasImage ? 'text-gray-200' : 'text-brand-textMuted';
+        const footerBorder = hasImage ? 'border-white/20' : 'border-brand-border/60';
+        const footerLabelColor = hasImage ? 'text-gray-300' : 'text-neutral-500';
+        return `<div onclick="executeSelectPart(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="${cardClass}"${bgStyle}>${overlay}<div class="relative z-10 p-5"><div class="flex justify-between items-start"><h4 class="font-bold text-sm text-white drop-shadow-sm">${item.name}</h4><div class="w-4 h-4 rounded-full border flex items-center justify-center ml-3 shrink-0 ${isSel ? 'border-brand-gold bg-brand-gold' : 'border-neutral-400/70'}">${isSel ? '<span class="w-1.5 h-1.5 bg-black rounded-full"></span>' : ''}</div></div><p class="text-xs ${descColor} mt-2.5">${item.desc}</p><div class="mt-5 pt-3 border-t ${footerBorder} flex justify-between items-center text-xs"><span class="${footerLabelColor}">建議升級投資</span><span class="text-sm font-extrabold text-brand-gold">+ NT$ ${Number(item.price).toLocaleString()}</span></div></div></div>`;
+      }).join('');
+    }
+
+    function executeSelectPart(item) {
+      if (item.category === 'extras') { const idx = clientSelections.extras.findIndex(e => e.id === item.id); if (idx > -1) clientSelections.extras.splice(idx, 1); else clientSelections.extras.push(item); }
+      else { clientSelections[item.category] = (clientSelections[item.category]?.id === item.id) ? null : item; }
+      renderClientOptionCards(); updatePriceAndSummarySidePanel();
+    }
+
+    function updatePriceAndSummarySidePanel() {
+      const b = document.getElementById('clientBrandSelect')?.value || '', m = document.getElementById('clientModelSelect')?.value || '', y = document.getElementById('clientYearSelect')?.value || '';
+      const titleEl = document.getElementById('sideCarTitle'); if (titleEl) titleEl.innerText = (b || m) ? `${b} - ${m} (${y})` : "未選取車型";
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
+      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+
+      const list = document.getElementById('sideItemList'); if (!list) return;
+      list.innerHTML = ''; let total = 0;
+      allowedCategories.forEach(key => {
+        if(key === 'extras') return;
+        const item = clientSelections[key];
+        if (item) { total += Number(item.price); list.innerHTML += `<div class="flex justify-between items-start text-xs border-b border-brand-border/40 pb-2.5"><div><span class="text-[10px] text-brand-gold font-bold uppercase block">${(ACOUSTIC_CATEGORIES[key]||key).split(' ')[0]}</span><span class="text-neutral-200 font-medium block mt-0.5">${item.name}</span></div><span class="text-white font-mono font-bold shrink-0">NT$ ${Number(item.price).toLocaleString()}</span></div>`; }
+      });
+      if(allowedCategories.includes('extras') && clientSelections.extras) {
+        clientSelections.extras.forEach(item => { total += Number(item.price); list.innerHTML += `<div class="flex justify-between items-start text-xs border-b border-brand-border/40 pb-2.5"><div><span class="text-[10px] text-neutral-400 font-bold uppercase block">專屬配件</span><span class="text-neutral-200 font-medium block mt-0.5">${item.name}</span></div><span class="text-white font-mono font-bold shrink-0">NT$ ${Number(item.price).toLocaleString()}</span></div>`; });
+      }
+      if (!list.innerHTML) list.innerHTML = '<div class="text-brand-textMuted text-center py-12 text-xs">您尚未勾選適用此車型的選配項目。</div>';
+      const totalEl = document.getElementById('sideTotalPrice'); if (totalEl) totalEl.innerText = `NT$ ${total.toLocaleString()}`;
+      updateAcousticWireframeMap();
+      updateStep1CarImage(targetCar);
+    }
+
+    // 依目前選定車型，於 Step01 卡片顯示對應車款圖片（作法與商品卡片一致：cover 滿版 + 深色漸層遮罩維持文字可讀性）
+    function updateStep1CarImage(car) {
+      const layer = document.getElementById('step1CarImageLayer');
+      if (!layer) return;
+      if (car && car.image_url) {
+        layer.style.backgroundImage = `linear-gradient(to bottom right, rgba(20,20,20,0.55), rgba(20,20,20,0.88)), url('${car.image_url}')`;
+        layer.style.opacity = '1';
+      } else {
+        layer.style.backgroundImage = 'none';
+        layer.style.opacity = '0';
+      }
+    }
+
+    // 依目前選定車型，回傳該車支援的聲學分區清單
+    function getAllowedCategoriesForCurrentCar() {
+      const b = document.getElementById('clientBrandSelect')?.value || '', m = document.getElementById('clientModelSelect')?.value || '', y = document.getElementById('clientYearSelect')?.value || '';
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
+      return targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+    }
+
+    function updateAcousticWireframeMap() {
+      const allowedCategories = getAllowedCategoriesForCurrentCar();
+      document.querySelectorAll('.acoustic-node').forEach(el => el.classList.remove('active-tab'));
+      const activeNode = document.getElementById(`node-${currentCategory}`);
+      if (activeNode) activeNode.classList.add('active-tab');
+
+      Object.keys(ACOUSTIC_CATEGORIES).forEach(cat => {
+        if (cat === 'extras') return;
+        const node = document.getElementById(`node-${cat}`);
+        if (!node) return;
+        const isAllowed = allowedCategories.includes(cat);
+        node.style.display = isAllowed ? '' : 'none';
+        if (!isAllowed) return;
+        const item = clientSelections[cat];
+        if (item && Number(item.price) > 0) {
+          node.classList.add('upgraded');
+          node.querySelectorAll('circle, rect').forEach(c => { c.setAttribute('fill', '#E5FE00'); c.setAttribute('stroke', '#FFFFFF'); });
+        } else {
+          node.classList.remove('upgraded');
+          node.querySelectorAll('circle, rect').forEach(c => { c.setAttribute('fill', '#2A2A2A'); c.setAttribute('stroke', '#555555'); });
+        }
+      });
+    }
+
+    function openAdminAuth() { document.getElementById('authModal').classList.remove('hidden', 'opacity-0'); }
+    function closeAdminAuth() { document.getElementById('authModal').classList.add('opacity-0'); setTimeout(() => document.getElementById('authModal').classList.add('hidden'), 300); }
+    function executeAdminAuthCheck() { if(document.getElementById('authPasswordInput').value === CONFIG_ADMIN_PASSWORD) { closeAdminAuth(); openAdminMainDashboard(); } else alert('密碼錯誤！'); }
+    function openAdminMainDashboard() { document.getElementById('mainConfiguratorPanel').classList.add('hidden'); document.getElementById('sideSummaryPanel').classList.add('hidden'); document.getElementById('mainAdminPanel').classList.remove('hidden', 'opacity-0'); renderAdminCarTable(); renderAdminPartTable(); fetchContactMessages(); }
+    function closeAdminView() { document.getElementById('mainAdminPanel').classList.add('opacity-0'); setTimeout(() => { document.getElementById('mainAdminPanel').classList.add('hidden'); document.getElementById('mainConfiguratorPanel').classList.remove('hidden'); document.getElementById('sideSummaryPanel').classList.remove('hidden'); renderClientCarSelectors(); renderClientOptionCards(); updatePriceAndSummarySidePanel(); }, 300); }
+    function switchAdminSubTab(tab) {
+      const panels = { cars: 'admin-subpanel-cars', parts: 'admin-subpanel-parts', messages: 'admin-subpanel-messages' };
+      Object.entries(panels).forEach(([key, id]) => {
+        document.getElementById(id).className = (tab === key) ? 'bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6 block' : 'bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6 hidden';
+        const btn = document.getElementById(`admin-tab-btn-${key}`);
+        if (btn) btn.className = (tab === key) ? 'px-4 py-2 rounded-xl text-xs font-bold bg-brand-gold text-black' : 'px-4 py-2 rounded-xl text-xs font-bold bg-brand-cardBg text-brand-textMuted';
+      });
+    }
+
+    async function fetchContactMessages() {
+      const tbody = document.getElementById('adminMessageTableBody');
+      if (!tbody || !_supabase) return;
+      tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-brand-textMuted">訊息載入中...</td></tr>`;
+      try {
+        const { data, error } = await _supabase.from('contact_messages').select('*').order('id', { ascending: false });
+        if (error) throw error;
+        messageDb = data || [];
+        renderAdminMessageTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-red-400">訊息載入失敗，請確認 Supabase 是否已建立 contact_messages 資料表。<br>${err.message}</td></tr>`;
+      }
+    }
+
+    function renderAdminMessageTable() {
+      const tbody = document.getElementById('adminMessageTableBody');
+      if (!tbody) return;
+      if (messageDb.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-brand-textMuted">目前尚未收到任何聯絡表單訊息。</td></tr>`; return; }
+      tbody.innerHTML = messageDb.map(msg => {
+        const time = msg.created_at ? new Date(msg.created_at).toLocaleString('zh-TW', { hour12: false }) : '—';
+        return `<tr class="hover:bg-white/5 text-xs align-top">
+          <td class="py-3 px-2 whitespace-nowrap text-brand-textMuted">${time}</td>
+          <td class="py-3 px-2 font-bold text-white">${msg.name || ''}</td>
+          <td class="py-3 px-2">${msg.phone || ''}</td>
+          <td class="py-3 px-2 break-all">${msg.email || ''}</td>
+          <td class="py-3 px-2">${msg.car_model || ''}</td>
+          <td class="py-3 px-3 text-gray-300 whitespace-pre-wrap">${msg.message || ''}</td>
+          <td class="py-3 px-2 text-right whitespace-nowrap"><button onclick="deleteContactMessage('${msg.id}')" class="text-red-400 hover:text-red-300">刪除</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function deleteContactMessage(id) {
+      if (!confirm('確定要刪除這筆聯絡訊息嗎？')) return;
+      try {
+        const { error } = await _supabase.from('contact_messages').delete().eq('id', id);
+        if (error) throw error;
+        await fetchContactMessages();
+      } catch (err) {
+        alert('刪除失敗：' + err.message);
+      }
+    }
+
+    async function updatePartInline(id, field, value, inputEl) {
+      inputEl.classList.add('border-yellow-500');
+      let finalValue = (field === 'price') ? (Number(value) || 0) : value;
+      try {
+        const { error } = await _supabase.from('audio_parts').update({ [field]: finalValue }).eq('id', id);
+        inputEl.classList.remove('border-yellow-500');
+        if (error) throw error;
+        inputEl.classList.add('border-green-500', 'text-green-400');
+        const target = partDb.find(p => p.id === id); if (target) target[field] = finalValue;
+        setTimeout(() => inputEl.classList.remove('border-green-500', 'text-green-400'), 1500);
+      } catch (err) { alert(`無法儲存修改：\n` + err.message); inputEl.classList.add('border-red-500'); }
+    }
+
+    async function handlePartImageReplace(id, inputEl) {
+      const file = inputEl.files[0];
+      if (!file) return;
+      const imgEl = document.getElementById(`partImg-${id}`);
+      try {
+        const url = await uploadPartImageFile(file);
+        const { error } = await _supabase.from('audio_parts').update({ image_url: url }).eq('id', id);
+        if (error) throw error;
+        const target = partDb.find(p => p.id === id); if (target) target.image_url = url;
+        if (imgEl) { imgEl.src = url; imgEl.classList.remove('hidden'); }
+        renderClientOptionCards();
+      } catch (err) {
+        alert('圖片更換失敗：\n' + err.message);
+      } finally {
+        inputEl.value = '';
+      }
+    }
+
+    async function handleCarImageReplace(id, inputEl) {
+      const file = inputEl.files[0];
+      if (!file) return;
+      const imgEl = document.getElementById(`carImg-${id}`);
+      try {
+        const url = await uploadCarImageFile(file);
+        const { error } = await _supabase.from('audio_cars').update({ image_url: url }).eq('id', id);
+        if (error) throw error;
+        const target = carDb.find(c => c.id === id); if (target) target.image_url = url;
+        if (imgEl) { imgEl.src = url; imgEl.classList.remove('hidden'); }
+        updatePriceAndSummarySidePanel();
+      } catch (err) {
+        alert('車款圖片更換失敗：\n' + err.message);
+      } finally {
+        inputEl.value = '';
+      }
+    }
+
+    async function updateCarInline(id, field, value, inputEl) {
+      inputEl.classList.add('border-yellow-500');
+      try {
+        const { error } = await _supabase.from('audio_cars').update({ [field]: value.trim() }).eq('id', id);
+        inputEl.classList.remove('border-yellow-500');
+        if (error) throw error;
+        inputEl.classList.add('border-green-500', 'text-green-400');
+        const target = carDb.find(c => c.id === id); if (target) target[field] = value.trim();
+        setTimeout(() => inputEl.classList.remove('border-green-500', 'text-green-400'), 1500);
+      } catch (err) { alert("無法更新車款資料：" + err.message); inputEl.classList.add('border-red-500'); }
+    }
+
+    function renderAdminCarTable() {
+      const tbody = document.getElementById('adminCarTableBody'); if (!tbody) return;
+      tbody.innerHTML = carDb.map(car => {
+        const catTags = (car.categories || []).map(c => `<span class="inline-block bg-brand-darkBg px-1.5 py-0.5 rounded text-[10px] text-brand-gold mr-1 mb-1 border border-brand-border/50">${(ACOUSTIC_CATEGORIES[c]||c).split(' ')[0]}</span>`).join('');
+        return `<tr class="hover:bg-white/5 text-xs"><td class="py-3 px-2"><div class="flex flex-col items-center gap-1"><img src="${car.image_url || ''}" class="w-12 h-12 object-cover rounded-lg border border-brand-border bg-brand-darkBg ${car.image_url ? '' : 'hidden'}" id="carImg-${car.id}" onerror="this.classList.add('hidden')"><label class="text-[10px] text-brand-gold cursor-pointer hover:underline">更換<input type="file" accept="image/*" class="hidden" onchange="handleCarImageReplace(${car.id}, this)"></label></div></td><td class="py-3 px-3 font-bold text-brand-gold">${car.brand}</td><td class="py-3 px-3"><input type="text" value="${car.model}" onchange="updateCarInline(${car.id}, 'model', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td><td class="py-3 px-3"><input type="text" value="${car.year}" onchange="updateCarInline(${car.id}, 'year', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td><td class="py-3 px-3">${catTags}</td><td class="py-3 px-3 text-right whitespace-nowrap"><button onclick="openCarCategoryModal(${car.id})" class="bg-brand-gold/10 text-brand-gold hover:bg-brand-gold hover:text-black font-semibold px-2.5 py-1 rounded transition mr-2">⚙️ 設定部位</button><button onclick="_supabase.from('audio_cars').delete().eq('id',${car.id}).then(()=>fetchSysData())" class="text-red-400 hover:text-red-300">移除</button></td></tr>`;
+      }).join('');
+    }
+
+    function renderAdminPartCategoryTabs() {
+      const box = document.getElementById('adminPartCategoryTabs'); if (!box) return;
+      const catKeys = Object.keys(ACOUSTIC_CATEGORIES);
+      if (!catKeys.includes(currentAdminPartCategory) && currentAdminPartCategory !== 'all') currentAdminPartCategory = 'all';
+      const countFor = (key) => key === 'all' ? partDb.length : partDb.filter(p => p.category === key).length;
+      const tabs = [{ key: 'all', label: '全部品項' }, ...catKeys.map(k => ({ key: k, label: ACOUSTIC_CATEGORIES[k] }))];
+      box.innerHTML = tabs.map(t => {
+        const active = currentAdminPartCategory === t.key;
+        return `<button onclick="switchAdminPartCategory('${t.key}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center gap-1.5 ${active ? 'bg-brand-gold text-black' : 'bg-brand-darkBg text-brand-textMuted hover:text-white border border-brand-border'}">
+          <span>${t.label}</span>
+          <span class="text-[10px] ${active ? 'text-black/60' : 'text-neutral-500'}">${countFor(t.key)}</span>
+        </button>`;
+      }).join('');
+    }
+
+    function switchAdminPartCategory(cat) {
+      currentAdminPartCategory = cat;
+      renderAdminPartCategoryTabs();
+      renderAdminPartTable();
+      const addCatSelect = document.getElementById('addPartCat');
+      if (addCatSelect && cat !== 'all' && [...addCatSelect.options].some(o => o.value === cat)) addCatSelect.value = cat;
+    }
+
+    function renderAdminPartTable() {
+      const tbody = document.getElementById('adminPartTableBody'); if (!tbody) return;
+      renderAdminPartCategoryTabs();
+      const visibleParts = currentAdminPartCategory === 'all' ? partDb : partDb.filter(p => p.category === currentAdminPartCategory);
+      if (visibleParts.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-brand-textMuted">此分類目前尚未上架任何品項。</td></tr>`; return; }
+      tbody.innerHTML = visibleParts.map(part => `
+        <tr class="hover:bg-white/5 text-xs">
+          <td class="py-3 px-2">
+            <div class="flex flex-col items-center gap-1">
+              <img src="${part.image_url || ''}" class="w-10 h-10 object-cover rounded-lg border border-brand-border bg-brand-darkBg ${part.image_url ? '' : 'hidden'}" id="partImg-${part.id}" onerror="this.classList.add('hidden')">
+              <label class="text-[10px] text-brand-gold cursor-pointer hover:underline">
+                更換
+                <input type="file" accept="image/*" class="hidden" onchange="handlePartImageReplace('${part.id}', this)">
+              </label>
+            </div>
+          </td>
+          <td class="py-3 px-2 font-mono text-brand-gold">${(ACOUSTIC_CATEGORIES[part.category]||part.category).split(' ')[0]}</td>
+          <td class="py-3 px-3"><input type="text" value="${(part.name||'').replace(/"/g, '&quot;')}" onchange="updatePartInline('${part.id}', 'name', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full font-bold transition"></td>
+          <td class="py-3 px-3"><input type="text" value="${(part.desc||'').replace(/"/g, '&quot;')}" onchange="updatePartInline('${part.id}', 'desc', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td>
+          <td class="py-3 px-3"><input type="number" value="${part.price}" onchange="updatePartInline('${part.id}', 'price', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-brand-gold font-bold w-24 transition"></td>
+          <td class="py-3 px-2">
+            <button onclick="openPartCompatibilityModal('${part.id}')" class="w-full text-left px-2 py-1.5 rounded-lg border transition ${(part.compatible_car_ids && part.compatible_car_ids.length) ? 'border-brand-gold/50 bg-brand-gold/10 text-brand-gold' : 'border-brand-border bg-brand-darkBg text-neutral-400 hover:text-white'}">
+              ${(part.compatible_car_ids && part.compatible_car_ids.length) ? `⚙️ 限定 ${part.compatible_car_ids.length} 款車` : '✓ 全車系通用'}
+            </button>
+          </td>
+          <td class="py-3 px-2 text-right"><button onclick="_supabase.from('audio_parts').delete().eq('id','${part.id}').then(()=>fetchSysData())" class="text-red-400 hover:text-red-300">下架</button></td>
+        </tr>`).join('');
+    }
+
+    function handleAddCarImagePreview(event) {
+      const file = event.target.files[0];
+      const preview = document.getElementById('addCarImagePreview');
+      if (!file || !preview) return;
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove('hidden');
+    }
+
+    async function executeAddCar() {
+      const brand = document.getElementById('addCarBrand').value.trim(), model = document.getElementById('addCarModel').value.trim(), year = document.getElementById('addCarYear').value.trim() || '不限';
+      const checkedBoxes = document.querySelectorAll('#addCarCategoryCheckboxes input:checked');
+      const checkedCats = Array.from(checkedBoxes).map(b => b.value);
+      const imageInput = document.getElementById('addCarImage');
+      const imageFile = imageInput && imageInput.files ? imageInput.files[0] : null;
+      if(brand && model) {
+        const submitBtn = document.getElementById('addCarSubmitBtn');
+        const origBtnText = submitBtn.innerHTML;
+        try {
+          let image_url = null;
+          if (imageFile) {
+            submitBtn.innerHTML = '⏳ 上傳圖片中...';
+            submitBtn.disabled = true;
+            image_url = await uploadCarImageFile(imageFile);
+          }
+          await _supabase.from('audio_cars').insert([{brand, model, year, categories: checkedCats, image_url}]);
+          document.getElementById('addCarBrand').value = ''; document.getElementById('addCarModel').value = ''; document.getElementById('addCarYear').value = '';
+          if (imageInput) imageInput.value = '';
+          const preview = document.getElementById('addCarImagePreview'); if (preview) preview.classList.add('hidden');
+          await fetchSysData();
+        } catch (err) {
+          alert('圖片上傳或新增車型失敗：\n' + err.message);
+        } finally {
+          submitBtn.innerHTML = origBtnText;
+          submitBtn.disabled = false;
+        }
+      } else { alert("請填寫完整的品牌與型號"); }
+    }
+
+    function handleAddPartImagePreview(event) {
+      const file = event.target.files[0];
+      const preview = document.getElementById('addPartImagePreview');
+      if (!file || !preview) return;
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove('hidden');
+    }
+
+    async function executeAddPart() {
+      const category = document.getElementById('addPartCat').value, name = document.getElementById('addPartName').value.trim(), desc = document.getElementById('addPartDesc').value.trim(), price = Number(document.getElementById('addPartPrice').value)||0;
+      const imageInput = document.getElementById('addPartImage');
+      const imageFile = imageInput && imageInput.files ? imageInput.files[0] : null;
+      if(name) {
+        const submitBtn = document.getElementById('addPartSubmitBtn');
+        const origBtnText = submitBtn.innerHTML;
+        try {
+          let image_url = null;
+          if (imageFile) {
+            submitBtn.innerHTML = '⏳ 上傳圖片中...';
+            submitBtn.disabled = true;
+            image_url = await uploadPartImageFile(imageFile);
+          }
+          await _supabase.from('audio_parts').insert([{id:'p_'+Date.now(), category, name, desc, price, image_url}]);
+          document.getElementById('addPartName').value = ''; document.getElementById('addPartDesc').value = ''; document.getElementById('addPartPrice').value = '';
+          if (imageInput) imageInput.value = '';
+          const preview = document.getElementById('addPartImagePreview'); if (preview) preview.classList.add('hidden');
+          await fetchSysData();
+        } catch (err) {
+          alert('圖片上傳或新增品項失敗：\n' + err.message);
+        } finally {
+          submitBtn.innerHTML = origBtnText;
+          submitBtn.disabled = false;
+        }
+      } else { alert("請填寫品項名稱"); }
+    }
+
+    function openCarCategoryModal(carId) {
+      activeModalCarId = carId;
+      const car = carDb.find(c => c.id === carId);
+      const allowed = car.categories || Object.keys(ACOUSTIC_CATEGORIES);
+      const box = document.getElementById('modalCheckboxesContainer');
+      if (box) {
+        box.innerHTML = Object.entries(ACOUSTIC_CATEGORIES).map(([key, label]) => {
+          const isChecked = allowed.includes(key) ? 'checked' : '';
+          return `<label class="flex items-center space-x-2 py-1"><input type="checkbox" value="${key}" ${isChecked} class="rounded border-brand-border bg-brand-inputBg text-brand-gold"> <span class="text-gray-200">${label}</span></label>`;
+        }).join('');
+      }
+      document.getElementById('carCategoryModal')?.classList.remove('hidden', 'opacity-0');
+    }
+    function closeCarCategoryModal() { document.getElementById('carCategoryModal')?.classList.add('opacity-0'); setTimeout(() => document.getElementById('carCategoryModal')?.classList.add('hidden'), 300); }
+    async function saveCarCategories() {
+      const checkedBoxes = document.querySelectorAll('#modalCheckboxesContainer input:checked');
+      const cats = Array.from(checkedBoxes).map(b => b.value);
+      await _supabase.from('audio_cars').update({ categories: cats }).eq('id', activeModalCarId);
+      closeCarCategoryModal();
+      await fetchSysData();
+    }
+
+    function openPartCompatibilityModal(partId) {
+      activeModalPartId = partId;
+      const part = partDb.find(p => p.id === partId);
+      const compat = (part && part.compatible_car_ids) || [];
+      const box = document.getElementById('partCompatCheckboxesContainer');
+      if (box) {
+        if (carDb.length === 0) {
+          box.innerHTML = '<div class="col-span-2 text-xs text-brand-textMuted py-4 text-center">尚未建立任何車型，請先於「車型與部位管理」新增車款。</div>';
+        } else {
+          box.innerHTML = carDb.map(car => {
+            const isChecked = compat.includes(car.id) ? 'checked' : '';
+            return `<label class="flex items-center space-x-2 py-1"><input type="checkbox" value="${car.id}" ${isChecked} class="rounded border-brand-border bg-brand-inputBg text-brand-gold"> <span class="text-gray-200">${car.brand} ${car.model} <span class="text-neutral-500">(${car.year})</span></span></label>`;
+          }).join('');
+        }
+      }
+      const titleEl = document.getElementById('modalPartTitle');
+      if (titleEl) titleEl.innerText = `設定專屬車型：${part ? part.name : ''}`;
+      document.getElementById('partCompatibilityModal')?.classList.remove('hidden', 'opacity-0');
+    }
+    function closePartCompatibilityModal() { document.getElementById('partCompatibilityModal')?.classList.add('opacity-0'); setTimeout(() => document.getElementById('partCompatibilityModal')?.classList.add('hidden'), 300); }
+    async function savePartCompatibility() {
+      const checkedBoxes = document.querySelectorAll('#partCompatCheckboxesContainer input:checked');
+      const carIds = Array.from(checkedBoxes).map(b => b.value);
+      await _supabase.from('audio_parts').update({ compatible_car_ids: carIds }).eq('id', activeModalPartId);
+      closePartCompatibilityModal();
+      await fetchSysData();
+    }
+
+    function generateOfficialPDF() {
+      const btn = document.getElementById('pdfTriggerBtn');
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<span>⏳ 正在精準對齊並渲染 PDF...</span>';
+      btn.disabled = true;
+
+      const b = document.getElementById('clientBrandSelect').value || '', m = document.getElementById('clientModelSelect').value || '', y = document.getElementById('clientYearSelect').value || '';
+      document.getElementById('pdfCarModelLabel').innerText = `${b} ${m} (${y})`;
+      const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y) || carDb[0];
+      const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : Object.keys(ACOUSTIC_CATEGORIES);
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      document.getElementById('pdfQuoteDate').innerText = `DATE: ${dateStr}`;
+      document.getElementById('pdfQuoteNo').innerText = `QUOTATION NO: Q-${dateStr.replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const tbody = document.getElementById('pdfItemsTbody');
+      tbody.innerHTML = '';
+      let total = 0;
+
+      allowedCategories.forEach(key => {
+        if(key === 'extras') return;
+        const item = clientSelections[key];
+        if (item) {
+          total += Number(item.price);
+          tbody.innerHTML += `<tr class="border-b border-gray-200"><td class="py-4 px-2 font-bold text-gray-700 align-top">${ACOUSTIC_CATEGORIES[key]||key}</td><td class="py-4 px-2 align-top"><div class="font-bold text-gray-900 text-base">${item.name}</div><div class="text-xs text-gray-500 mt-1 leading-relaxed">${item.desc || ''}</div></td><td class="py-4 px-2 text-right font-mono font-bold text-gray-900 text-sm align-top">NT$ ${Number(item.price).toLocaleString()}</td></tr>`;
+        }
+      });
+
+      if(allowedCategories.includes('extras') && clientSelections.extras) {
+        clientSelections.extras.forEach(item => {
+          total += Number(item.price);
+          tbody.innerHTML += `<tr class="border-b border-gray-200"><td class="py-4 px-2 font-bold text-gray-700 align-top">專屬車款升級模組 (Accessories)</td><td class="py-4 px-2 align-top"><div class="font-bold text-gray-900 text-base">${item.name}</div><div class="text-xs text-gray-500 mt-1 leading-relaxed">${item.desc || ''}</div></td><td class="py-4 px-2 text-right font-mono font-bold text-gray-900 text-sm align-top">NT$ ${Number(item.price).toLocaleString()}</td></tr>`;
+        });
+      }
+
+      document.getElementById('pdfSubtotalLabel').innerText = `NT$ ${total.toLocaleString()}`;
+      document.getElementById('pdfTotalLabel').innerText = `NT$ ${total.toLocaleString()}`;
+
+      const zone = document.getElementById('pdf-render-zone');
+      zone.classList.add('rendering-active');
+
+      setTimeout(() => {
+        const element = document.getElementById('pdf-document');
+        html2pdf().set({
+          margin: 0,
+          filename: `選配單_${b}_${m.replace(/\s+/g, '_')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollX: 0, scrollY: 0 },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).from(element).save().then(() => {
+          zone.classList.remove('rendering-active');
+          btn.innerHTML = origText;
+          btn.disabled = false;
+        }).catch(err => {
+          zone.classList.remove('rendering-active');
+          btn.innerHTML = origText;
+          btn.disabled = false;
+        });
+      }, 500);
+    }
+
+    window.onload = initSystem;
+  </script>
+  <script src="assets/site.js"></script>
+</body>
+</html>

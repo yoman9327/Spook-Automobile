@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>聯絡我們｜Spook Automobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { gold: '#E5FE00', goldHover: '#C1D600', darkBg: '#090909', cardBg: '#141414', inputBg: '#1F1F1F', border: '#2A2A2A', textMuted: '#A0A0A0' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="min-h-screen flex flex-col relative">
+  <div id="bgParallaxLayer"></div>
+
+  <header class="border-b border-brand-border bg-brand-darkBg/95 backdrop-blur-md sticky top-0 z-40 px-6 py-3">
+    <div class="relative flex justify-between items-center">
+      <a href="index.html" class="flex items-center shrink-0">
+        <img src="assets/spook-logo.svg" class="h-9 md:h-10 w-auto" alt="品牌標誌">
+      </a>
+      <nav class="hidden lg:flex items-center space-x-8 text-sm font-medium absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <a href="index.html" class="site-nav-link">首頁</a>
+        <a href="services.html" class="site-nav-link">服務項目</a>
+        <a href="about.html" class="site-nav-link">關於我們</a>
+        <a href="SPK_CNFG_V10_1_6_2.html" class="site-nav-link">線上選配工具</a>
+        <a href="contact.html" class="site-nav-link active">聯絡我們</a>
+      </nav>
+      <div class="flex items-center space-x-2">
+        <a href="SPK_CNFG_V10_1_6_2.html" class="hidden sm:flex px-4 py-2 rounded-lg text-xs font-bold tracking-wider bg-brand-gold hover:bg-brand-goldHover text-black items-center space-x-1.5">
+          <span>立即開始選配</span>
+        </a>
+        <button onclick="toggleMobileNav()" class="lg:hidden p-2 rounded-lg border border-brand-border text-brand-textMuted hover:text-white" aria-label="開啟選單">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobileNavMenu" class="hidden lg:hidden mt-3 pb-1 flex flex-col space-y-3 text-sm font-medium border-t border-brand-border pt-3">
+      <a href="index.html" class="site-nav-link">首頁</a>
+      <a href="services.html" class="site-nav-link">服務項目</a>
+      <a href="about.html" class="site-nav-link">關於我們</a>
+      <a href="SPK_CNFG_V10_1_6_2.html" class="site-nav-link">線上選配工具</a>
+      <a href="contact.html" class="site-nav-link active">聯絡我們</a>
+    </div>
+  </header>
+
+  <main class="flex-grow">
+
+    <!-- 頁首 -->
+    <section class="max-w-7xl mx-auto px-6 md:px-8 pt-16 pb-12 text-center">
+      <span class="inline-block text-[11px] font-mono tracking-widest text-brand-gold uppercase border border-brand-gold/30 bg-brand-gold/10 px-3 py-1 rounded-full">Contact Us</span>
+      <h1 class="mt-6 text-3xl md:text-5xl font-black text-white leading-tight">聯絡我們</h1>
+      <p class="mt-4 max-w-2xl mx-auto text-sm md:text-base text-brand-textMuted leading-relaxed">
+        歡迎預約到店諮詢，或填寫下方表單，我們的顧問將盡快與您聯繫。
+      </p>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-6 md:px-8 pb-24 grid grid-cols-1 lg:grid-cols-5 gap-8">
+
+      <!-- 聯絡資訊 -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-5">
+          <div class="flex items-start space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold shrink-0">📍</div>
+            <div>
+              <div class="text-white font-bold text-sm">門市地址</div>
+              <p class="text-xs text-brand-textMuted mt-1">台南市善化區北仔店167號</p>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold shrink-0">📷</div>
+            <div>
+              <div class="text-white font-bold text-sm">Instagram</div>
+              <p class="text-xs text-brand-textMuted mt-1"><a href="https://instagram.com/spook.automobile" target="_blank" rel="noopener" class="hover:text-brand-gold transition">@spook.automobile</a></p>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold shrink-0">✉️</div>
+            <div>
+              <div class="text-white font-bold text-sm">電子信箱</div>
+              <p class="text-xs text-brand-textMuted mt-1">spook.automobiles@gmail.com</p>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold shrink-0">🕒</div>
+            <div>
+              <div class="text-white font-bold text-sm">營業時間</div>
+              <p class="text-xs text-brand-textMuted mt-1">週二至週日 11:00 - 19:00（週一公休）</p>
+            </div>
+          </div>
+        </div>
+        <div class="aspect-video rounded-2xl overflow-hidden border border-brand-border">
+          <iframe
+            src="https://www.google.com/maps?q=%E5%8F%B0%E5%8D%97%E5%B8%82%E5%96%84%E5%8C%96%E5%8D%80%E5%8C%97%E4%BB%94%E5%BA%97167%E8%99%9F&output=embed"
+            class="w-full h-full border-0"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="門市地圖"></iframe>
+        </div>
+      </div>
+
+      <!-- 聯絡表單 -->
+      <div class="lg:col-span-3">
+        <form id="contactForm" onsubmit="submitContactForm(event)" class="bg-brand-cardBg p-6 md:p-8 rounded-2xl border border-brand-border space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-brand-textMuted mb-1.5">姓名 <span class="text-brand-gold">*</span></label>
+              <input required type="text" id="cfName" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+            </div>
+            <div>
+              <label class="block text-xs text-brand-textMuted mb-1.5">聯絡電話 <span class="text-brand-gold">*</span></label>
+              <input required type="tel" id="cfPhone" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-brand-textMuted mb-1.5">電子信箱</label>
+            <input type="email" id="cfEmail" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+          </div>
+          <div>
+            <label class="block text-xs text-brand-textMuted mb-1.5">車輛品牌／型號</label>
+            <input type="text" id="cfCarModel" placeholder="例：BMW 3 Series G20" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+          </div>
+          <div>
+            <label class="block text-xs text-brand-textMuted mb-1.5">需求說明</label>
+            <textarea id="cfMessage" rows="4" placeholder="請簡述您想升級的項目或想諮詢的問題" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold resize-none"></textarea>
+          </div>
+          <button type="submit" id="cfSubmitBtn" class="w-full py-4 bg-gradient-to-r from-brand-gold to-lime-300 hover:brightness-110 text-black font-bold rounded-xl shadow-xl text-sm transition">送出諮詢需求</button>
+          <p id="cfStatusMsg" class="text-xs text-center hidden"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-brand-border bg-brand-cardBg/60">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-8 text-xs text-brand-textMuted">
+      <div class="md:col-span-2 space-y-3">
+        <img src="assets/spook-logo.svg" class="h-8 w-auto" alt="品牌標誌">
+        <p class="leading-relaxed max-w-sm">專注於原廠無損車用音響升級，結合隱藏化聲學結構設計與精密 RTA 校正工藝，為每位車主打造獨一無二的座艙聽感。</p>
+      </div>
+      <div class="space-y-2">
+        <div class="text-white font-bold mb-2">網站導覽</div>
+        <a href="index.html" class="block hover:text-brand-gold transition">首頁</a>
+        <a href="services.html" class="block hover:text-brand-gold transition">服務項目</a>
+        <a href="about.html" class="block hover:text-brand-gold transition">關於我們</a>
+        <a href="SPK_CNFG_V10_1_6_2.html" class="block hover:text-brand-gold transition">線上選配工具</a>
+        <a href="contact.html" class="block hover:text-brand-gold transition">聯絡我們</a>
+      </div>
+      <div class="space-y-2">
+        <div class="text-white font-bold mb-2">聯絡資訊</div>
+        <p>台南市善化區北仔店167號</p>
+        <p>IG：@spook.automobile</p>
+        <p>spook.automobiles@gmail.com</p>
+      </div>
+    </div>
+    <div class="border-t border-brand-border/60 py-4 text-center text-[11px] text-neutral-500">
+      © 2026 客製化汽車音響工作室. All Rights Reserved.
+    </div>
+  </footer>
+
+  <script src="assets/site.js"></script>
+  <script>
+    const SUPABASE_URL = "https://jqrstoljzmmowxvnelxa.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnN0b2xqem1tb3d4dm5lbHhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzYzOTcsImV4cCI6MjA5ODg1MjM5N30.U5TX90CkkgVXR3woxQLFdHRNg6f6faneRGrpZAxwPpY";
+    const _supabase = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    async function submitContactForm(event) {
+      event.preventDefault();
+      const btn = document.getElementById('cfSubmitBtn');
+      const statusMsg = document.getElementById('cfStatusMsg');
+      const payload = {
+        name: document.getElementById('cfName').value.trim(),
+        phone: document.getElementById('cfPhone').value.trim(),
+        email: document.getElementById('cfEmail').value.trim(),
+        car_model: document.getElementById('cfCarModel').value.trim(),
+        message: document.getElementById('cfMessage').value.trim()
+      };
+      btn.disabled = true;
+      btn.innerText = '傳送中...';
+      try {
+        if (!_supabase) throw new Error('資料庫連線尚未設定');
+        const { error } = await _supabase.from('contact_messages').insert([payload]);
+        if (error) throw error;
+        statusMsg.className = 'text-xs text-center text-green-400';
+        statusMsg.innerText = '已收到您的需求，我們將盡快與您聯繫！';
+        document.getElementById('contactForm').reset();
+      } catch (err) {
+        statusMsg.className = 'text-xs text-center text-red-400';
+        statusMsg.innerText = '送出失敗，請改用電話或 Email 直接與我們聯繫：' + err.message;
+      } finally {
+        statusMsg.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerText = '送出諮詢需求';
+      }
+    }
+  </script>
+</body>
+</html>
