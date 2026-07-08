@@ -236,6 +236,7 @@
         <button onclick="switchAdminSubTab('parts')" id="admin-tab-btn-parts" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-cardBg text-brand-textMuted">🔊 音響選配品項管理</button>
         <button onclick="switchAdminSubTab('messages')" id="admin-tab-btn-messages" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-cardBg text-brand-textMuted">📨 聯絡訊息管理</button>
         <button onclick="switchAdminSubTab('packages')" id="admin-tab-btn-packages" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-cardBg text-brand-textMuted">🎁 套餐管理</button>
+        <button onclick="switchAdminSubTab('carRequests')" id="admin-tab-btn-carRequests" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-cardBg text-brand-textMuted">🚙 車型回報</button>
       </div>
 
       <div id="admin-subpanel-cars" class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6">
@@ -269,7 +270,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-gray-300 min-w-[800px]">
             <thead class="text-xs text-brand-textMuted uppercase border-b border-brand-border">
-              <tr><th class="py-3 px-2 w-20">圖片</th><th class="py-3 px-2 w-28">聲學分類</th><th class="py-3 px-3 w-1/5">品項名稱</th><th class="py-3 px-3 w-1/4">規格/特點描述</th><th class="py-3 px-3 w-20">建議售價 ($)</th><th class="py-3 px-3 w-20">會員價 ($)</th><th class="py-3 px-2 w-16">喇叭數</th><th class="py-3 px-2 w-32">適用車型</th><th class="py-3 px-2 w-32">相容性提示</th><th class="py-3 px-2 text-right">管理操作</th></tr>
+              <tr><th class="py-3 px-2 w-20">圖片</th><th class="py-3 px-2 w-28">聲學分類</th><th class="py-3 px-3 w-1/5">品項名稱</th><th class="py-3 px-3 w-1/4">規格/特點描述</th><th class="py-3 px-3 w-20">建議售價 ($)</th><th class="py-3 px-3 w-20">會員價 ($)</th><th class="py-3 px-2 w-16">喇叭數</th><th class="py-3 px-2 w-32">適用車型</th><th class="py-3 px-2 w-32">相容性提示</th><th class="py-3 px-2 w-32">技術規格表</th><th class="py-3 px-2 text-right">管理操作</th></tr>
             </thead>
             <tbody id="adminPartTableBody" class="divide-y divide-brand-border/60"></tbody>
           </table>
@@ -328,6 +329,21 @@
           <p class="text-[11px] text-neutral-400">新增後請點表格中的「適用車型」與「內含品項」按鈕，分別設定這個套餐要顯示在哪些車型、以及點擊後要自動勾選哪些品項。</p>
         </div>
       </div>
+
+      <div id="admin-subpanel-carRequests" class="bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-brand-textMuted">客戶透過選配工具「找不到你要的車型嗎？」表單回報的車型需求，依送出時間新到舊排序。</p>
+          <button onclick="fetchCarModelRequests()" class="px-3 py-1.5 bg-brand-cardBg border border-brand-border hover:border-brand-gold text-brand-textMuted hover:text-white rounded-lg text-xs font-semibold shrink-0">🔄 重新整理</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300 min-w-[600px]">
+            <thead class="text-xs text-brand-textMuted uppercase border-b border-brand-border">
+              <tr><th class="py-3 px-2 w-32">送出時間</th><th class="py-3 px-3">車輛品牌</th><th class="py-3 px-3">車款型號</th><th class="py-3 px-3">適用年份</th><th class="py-3 px-2 text-right">管理操作</th></tr>
+            </thead>
+            <tbody id="adminCarRequestTableBody" class="divide-y divide-brand-border/60"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div id="sideSummaryPanel" class="w-full lg:w-1/3">
@@ -352,6 +368,7 @@
           <button onclick="saveCurrentConfiguration()" id="saveConfigBtn" class="w-full py-3 border border-brand-border hover:border-brand-gold text-brand-textMuted hover:text-white font-bold rounded-xl text-sm transition">💾 儲存目前配置</button>
         </div>
       </div>
+      <button onclick="openCarRequestModal()" class="w-full mt-3 py-3 border border-dashed border-brand-border hover:border-brand-gold text-brand-textMuted hover:text-white font-semibold rounded-xl text-xs transition">找不到你要的車型嗎？</button>
     </div>
   </main>
 
@@ -402,6 +419,23 @@
       <div class="flex space-x-2 pt-2">
         <button onclick="closePartCompatRuleModal()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
         <button onclick="savePartCompatRule()" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">確認儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="partSpecsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-brand-cardBg border border-brand-border p-6 rounded-2xl max-w-lg w-full mx-4 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="text-base font-bold text-white" id="modalPartSpecsTitle">設定技術規格表</h3>
+        <button onclick="closePartSpecsModal()" class="text-brand-textMuted hover:text-white text-lg leading-none">×</button>
+      </div>
+      <p class="text-[11px] text-brand-textMuted leading-relaxed -mt-2">每行輸入一項規格，格式為「名稱：數值」，將以列表方式顯示於商品卡片上。留空則不顯示規格表。</p>
+      <div>
+        <textarea id="partSpecsTextInput" rows="8" placeholder="阻抗：4Ω&#10;靈敏度：91dB&#10;頻率響應：80Hz–20kHz&#10;功率承受：100W RMS" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-brand-gold"></textarea>
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closePartSpecsModal()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
+        <button onclick="savePartSpecs()" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">確認儲存</button>
       </div>
     </div>
   </div>
@@ -484,6 +518,46 @@
         </div>
         <p id="ccStatusMsg" class="text-xs text-center hidden"></p>
       </form>
+    </div>
+  </div>
+
+  <div id="carRequestModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-brand-cardBg border border-brand-border p-6 rounded-2xl max-w-md w-full mx-4 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="text-base font-bold text-white">找不到你要的車型嗎？</h3>
+        <button onclick="closeCarRequestModal()" class="text-brand-textMuted hover:text-white text-lg leading-none">×</button>
+      </div>
+      <p class="text-[11px] text-brand-gold/90 leading-relaxed -mt-2 bg-brand-gold/10 border border-brand-gold/20 rounded-xl p-3">Configurator 目前處於 Beta 階段，您的車型可能尚未加入資料庫，填入資訊幫助我們優化選配工具。</p>
+      <form id="carRequestForm" onsubmit="submitCarModelRequest(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-brand-textMuted mb-1.5">車輛品牌 <span class="text-brand-gold">*</span></label>
+          <input required type="text" id="crBrand" placeholder="例：Porsche" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+        </div>
+        <div>
+          <label class="block text-xs text-brand-textMuted mb-1.5">適用年份 <span class="text-brand-gold">*</span></label>
+          <input required type="text" id="crYear" placeholder="例：2022-2024" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+        </div>
+        <div>
+          <label class="block text-xs text-brand-textMuted mb-1.5">車款型號 <span class="text-brand-gold">*</span></label>
+          <input required type="text" id="crModel" placeholder="例：Taycan" class="w-full bg-brand-inputBg border border-brand-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand-gold">
+        </div>
+        <div class="flex space-x-2 pt-2">
+          <button type="button" onclick="closeCarRequestModal()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">取消</button>
+          <button type="submit" id="crSubmitBtn" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold">送出</button>
+        </div>
+        <p id="crStatusMsg" class="text-xs text-center hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="carRequestSuccessModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-brand-cardBg border border-brand-border p-6 rounded-2xl max-w-sm w-full mx-4 space-y-4 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center mx-auto text-brand-gold text-2xl">✓</div>
+      <p class="text-sm text-white leading-relaxed">感謝您幫我們優化選配工具，歡迎直接與我們聯繫讓專人為您了解需求並報價！</p>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeCarRequestSuccessModal()" class="w-1/2 py-2.5 bg-brand-inputBg text-brand-textMuted hover:text-white rounded-xl text-xs font-bold">關閉</button>
+        <a href="contact.html" class="w-1/2 py-2.5 bg-brand-gold hover:bg-brand-goldHover text-black rounded-xl text-xs font-bold flex items-center justify-center">聯絡我們</a>
+      </div>
     </div>
   </div>
 
@@ -868,7 +942,9 @@
         const priceHtml = hasMemberDiscount
           ? `<span class="text-[10px] text-neutral-500 line-through mr-1.5">NT$ ${Number(item.price).toLocaleString()}</span><span class="text-sm font-extrabold text-brand-gold">會員價 NT$ ${Number(item.member_price).toLocaleString()}</span>`
           : `<span class="text-sm font-extrabold text-brand-gold">+ NT$ ${Number(item.price).toLocaleString()}</span>`;
-        return `<div onclick="executeSelectPart(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="${cardClass}"${bgStyle}>${overlay}<div class="relative z-10 p-5"><div class="flex justify-between items-start"><h4 class="font-bold text-sm text-white drop-shadow-sm">${item.name}</h4><div class="w-4 h-4 rounded-full border flex items-center justify-center ml-3 shrink-0 ${isSel ? 'border-brand-gold bg-brand-gold' : 'border-neutral-400/70'}">${isSel ? '<span class="w-1.5 h-1.5 bg-black rounded-full"></span>' : ''}</div></div><p class="text-xs ${descColor} mt-2.5">${item.desc}</p><div class="mt-5 pt-3 border-t ${footerBorder} flex justify-between items-center text-xs"><span class="${footerLabelColor}">建議升級投資</span>${priceHtml}</div>${notLoggedInHint}</div></div>`;
+        const specs = parseSpecsText(item.specs_text);
+        const specsHtml = specs.length ? `<div class="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-3 pt-3 border-t ${footerBorder}">${specs.map(s => `<div class="min-w-0"><span class="text-[9px] ${footerLabelColor} uppercase tracking-wide block truncate">${s.label}</span><span class="text-[11px] ${descColor} font-semibold block truncate">${s.value}</span></div>`).join('')}</div>` : '';
+        return `<div onclick="executeSelectPart(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="${cardClass}"${bgStyle}>${overlay}<div class="relative z-10 p-5"><div class="flex justify-between items-start"><h4 class="font-bold text-sm text-white drop-shadow-sm">${item.name}</h4><div class="w-4 h-4 rounded-full border flex items-center justify-center ml-3 shrink-0 ${isSel ? 'border-brand-gold bg-brand-gold' : 'border-neutral-400/70'}">${isSel ? '<span class="w-1.5 h-1.5 bg-black rounded-full"></span>' : ''}</div></div><p class="text-xs ${descColor} mt-2.5">${item.desc}</p>${specsHtml}<div class="mt-5 pt-3 border-t ${footerBorder} flex justify-between items-center text-xs"><span class="${footerLabelColor}">建議升級投資</span>${priceHtml}</div>${notLoggedInHint}</div></div>`;
       }).join('');
     }
 
@@ -1087,10 +1163,10 @@
         btn.innerText = '登入';
       }
     }
-    function openAdminMainDashboard() { document.getElementById('mainConfiguratorPanel').classList.add('hidden'); document.getElementById('sideSummaryPanel').classList.add('hidden'); document.getElementById('mainAdminPanel').classList.remove('hidden', 'opacity-0'); renderAdminCarTable(); renderAdminPartTable(); renderAdminPackageTable(); fetchContactMessages(); }
+    function openAdminMainDashboard() { document.getElementById('mainConfiguratorPanel').classList.add('hidden'); document.getElementById('sideSummaryPanel').classList.add('hidden'); document.getElementById('mainAdminPanel').classList.remove('hidden', 'opacity-0'); renderAdminCarTable(); renderAdminPartTable(); renderAdminPackageTable(); fetchContactMessages(); fetchCarModelRequests(); }
     function closeAdminView() { document.getElementById('mainAdminPanel').classList.add('opacity-0'); setTimeout(() => { document.getElementById('mainAdminPanel').classList.add('hidden'); document.getElementById('mainConfiguratorPanel').classList.remove('hidden'); document.getElementById('sideSummaryPanel').classList.remove('hidden'); renderClientCarSelectors(); renderClientOptionCards(); updatePriceAndSummarySidePanel(); renderStagePackages(); }, 300); }
     function switchAdminSubTab(tab) {
-      const panels = { cars: 'admin-subpanel-cars', parts: 'admin-subpanel-parts', messages: 'admin-subpanel-messages', packages: 'admin-subpanel-packages' };
+      const panels = { cars: 'admin-subpanel-cars', parts: 'admin-subpanel-parts', messages: 'admin-subpanel-messages', packages: 'admin-subpanel-packages', carRequests: 'admin-subpanel-carRequests' };
       Object.entries(panels).forEach(([key, id]) => {
         document.getElementById(id).className = (tab === key) ? 'bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6 block' : 'bg-brand-cardBg p-6 rounded-2xl border border-brand-border space-y-6 hidden';
         const btn = document.getElementById(`admin-tab-btn-${key}`);
@@ -1136,6 +1212,48 @@
         const { error } = await _supabase.from('contact_messages').delete().eq('id', id);
         if (error) throw error;
         await fetchContactMessages();
+      } catch (err) {
+        alert('刪除失敗：' + err.message);
+      }
+    }
+
+    let carRequestDb = [];
+    async function fetchCarModelRequests() {
+      const tbody = document.getElementById('adminCarRequestTableBody');
+      if (!tbody || !_supabase) return;
+      tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-xs text-brand-textMuted">訊息載入中...</td></tr>`;
+      try {
+        const { data, error } = await _supabase.from('car_model_requests').select('*').order('id', { ascending: false });
+        if (error) throw error;
+        carRequestDb = data || [];
+        renderAdminCarRequestTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-xs text-red-400">訊息載入失敗，請確認 Supabase 是否已建立 car_model_requests 資料表。<br>${err.message}</td></tr>`;
+      }
+    }
+
+    function renderAdminCarRequestTable() {
+      const tbody = document.getElementById('adminCarRequestTableBody');
+      if (!tbody) return;
+      if (carRequestDb.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-xs text-brand-textMuted">目前尚未收到任何車型回報。</td></tr>`; return; }
+      tbody.innerHTML = carRequestDb.map(req => {
+        const time = req.created_at ? new Date(req.created_at).toLocaleString('zh-TW', { hour12: false }) : '—';
+        return `<tr class="hover:bg-white/5 text-xs align-top">
+          <td class="py-3 px-2 whitespace-nowrap text-brand-textMuted">${time}</td>
+          <td class="py-3 px-3 font-bold text-white">${req.brand || ''}</td>
+          <td class="py-3 px-3">${req.model || ''}</td>
+          <td class="py-3 px-3">${req.year || ''}</td>
+          <td class="py-3 px-2 text-right whitespace-nowrap"><button onclick="deleteCarModelRequest(${req.id})" class="text-red-400 hover:text-red-300">刪除</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function deleteCarModelRequest(id) {
+      if (!confirm('確定要刪除這筆車型回報嗎？')) return;
+      try {
+        const { error } = await _supabase.from('car_model_requests').delete().eq('id', id);
+        if (error) throw error;
+        await fetchCarModelRequests();
       } catch (err) {
         alert('刪除失敗：' + err.message);
       }
@@ -1254,7 +1372,7 @@
       const tbody = document.getElementById('adminPartTableBody'); if (!tbody) return;
       renderAdminPartCategoryTabs();
       const visibleParts = currentAdminPartCategory === 'all' ? partDb : partDb.filter(p => p.category === currentAdminPartCategory);
-      if (visibleParts.length === 0) { tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-xs text-brand-textMuted">此分類目前尚未上架任何品項。</td></tr>`; return; }
+      if (visibleParts.length === 0) { tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-xs text-brand-textMuted">此分類目前尚未上架任何品項。</td></tr>`; return; }
       tbody.innerHTML = visibleParts.map(part => `
         <tr class="hover:bg-white/5 text-xs">
           <td class="py-3 px-2">
@@ -1280,6 +1398,11 @@
           <td class="py-3 px-2">
             <button onclick="openPartCompatRuleModal('${part.id}')" class="w-full text-left px-2 py-1.5 rounded-lg border transition ${(part.compat_requires_categories && part.compat_requires_categories.length && part.compat_message) ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400' : 'border-brand-border bg-brand-darkBg text-neutral-400 hover:text-white'}">
               ${(part.compat_requires_categories && part.compat_requires_categories.length && part.compat_message) ? `⚠️ 已設定提示` : '未設定'}
+            </button>
+          </td>
+          <td class="py-3 px-2">
+            <button onclick="openPartSpecsModal('${part.id}')" class="w-full text-left px-2 py-1.5 rounded-lg border transition ${(part.specs_text && part.specs_text.trim()) ? 'border-brand-gold/50 bg-brand-gold/10 text-brand-gold' : 'border-brand-border bg-brand-darkBg text-neutral-400 hover:text-white'}">
+              ${(part.specs_text && part.specs_text.trim()) ? `📋 已設定 ${part.specs_text.trim().split('\n').filter(l => l.trim()).length} 項` : '未設定'}
             </button>
           </td>
           <td class="py-3 px-2 text-right"><button onclick="_supabase.from('audio_parts').delete().eq('id','${part.id}').then(()=>fetchSysData())" class="text-red-400 hover:text-red-300">下架</button></td>
@@ -1441,6 +1564,37 @@
         closePartCompatRuleModal();
         await fetchSysData();
       } catch (err) { alert('無法儲存相容性提示設定：\n' + err.message); }
+    }
+
+    // 技術規格表：後台自訂每項品項的規格清單（每行「名稱：數值」），顯示於商品卡片上
+    function openPartSpecsModal(partId) {
+      activeModalPartId = partId;
+      const part = partDb.find(p => p.id === partId);
+      const titleEl = document.getElementById('modalPartSpecsTitle');
+      if (titleEl) titleEl.innerText = `技術規格表：${part ? part.name : ''}`;
+      const input = document.getElementById('partSpecsTextInput');
+      if (input) input.value = (part && part.specs_text) || '';
+      document.getElementById('partSpecsModal')?.classList.remove('hidden', 'opacity-0');
+    }
+    function closePartSpecsModal() { document.getElementById('partSpecsModal')?.classList.add('opacity-0'); setTimeout(() => document.getElementById('partSpecsModal')?.classList.add('hidden'), 300); }
+    async function savePartSpecs() {
+      const specsText = document.getElementById('partSpecsTextInput').value.trim();
+      try {
+        const { error } = await _supabase.from('audio_parts').update({ specs_text: specsText || null }).eq('id', activeModalPartId);
+        if (error) throw error;
+        closePartSpecsModal();
+        await fetchSysData();
+      } catch (err) { alert('無法儲存技術規格表：\n' + err.message); }
+    }
+
+    // 將「名稱：數值」多行文字解析為結構化規格清單，供商品卡片渲染使用
+    function parseSpecsText(specsText) {
+      if (!specsText) return [];
+      return specsText.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+        const sepIdx = line.search(/[:：]/);
+        if (sepIdx === -1) return { label: line, value: '' };
+        return { label: line.slice(0, sepIdx).trim(), value: line.slice(sepIdx + 1).trim() };
+      });
     }
 
     function renderAdminPackageTable() {
@@ -1625,6 +1779,45 @@
         btn.innerText = '送出並聯絡專人';
       }
     }
+
+    // 「找不到你要的車型嗎？」：客戶回報資料庫尚未收錄的車型，供後台參考優化選配工具
+    function openCarRequestModal() {
+      document.getElementById('carRequestForm')?.reset();
+      const statusMsg = document.getElementById('crStatusMsg'); if (statusMsg) statusMsg.classList.add('hidden');
+      document.getElementById('carRequestModal')?.classList.remove('hidden', 'opacity-0');
+    }
+    function closeCarRequestModal() { document.getElementById('carRequestModal')?.classList.add('opacity-0'); setTimeout(() => document.getElementById('carRequestModal')?.classList.add('hidden'), 300); }
+    async function submitCarModelRequest(event) {
+      event.preventDefault();
+      const btn = document.getElementById('crSubmitBtn');
+      const statusMsg = document.getElementById('crStatusMsg');
+      const payload = {
+        brand: document.getElementById('crBrand').value.trim(),
+        model: document.getElementById('crModel').value.trim(),
+        year: document.getElementById('crYear').value.trim()
+      };
+      if (currentMemberSession) payload.user_id = currentMemberSession.user.id;
+      btn.disabled = true;
+      btn.innerText = '傳送中...';
+      try {
+        if (!_supabase) throw new Error('資料庫連線尚未設定');
+        const { error } = await _supabase.from('car_model_requests').insert([payload]);
+        if (error) throw error;
+        document.getElementById('carRequestForm').reset();
+        statusMsg.classList.add('hidden');
+        closeCarRequestModal();
+        openCarRequestSuccessModal();
+      } catch (err) {
+        statusMsg.className = 'text-xs text-center text-red-400';
+        statusMsg.innerText = '送出失敗：' + err.message;
+        statusMsg.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '送出';
+      }
+    }
+    function openCarRequestSuccessModal() { document.getElementById('carRequestSuccessModal')?.classList.remove('hidden', 'opacity-0'); }
+    function closeCarRequestSuccessModal() { document.getElementById('carRequestSuccessModal')?.classList.add('opacity-0'); setTimeout(() => document.getElementById('carRequestSuccessModal')?.classList.add('hidden'), 300); }
 
     function generateOfficialPDF() {
       const b = document.getElementById('clientBrandSelect').value || '', m = document.getElementById('clientModelSelect').value || '', y = document.getElementById('clientYearSelect').value || '';
