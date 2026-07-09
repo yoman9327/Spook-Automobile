@@ -246,7 +246,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-gray-300 min-w-[750px]">
             <thead class="text-xs text-brand-textMuted uppercase border-b border-brand-border">
-              <tr><th class="py-3 px-2 w-20">圖片</th><th class="py-3 px-3 w-1/5">汽車品牌</th><th class="py-3 px-3 w-1/4">車款型號</th><th class="py-3 px-3 w-1/6">適用年份</th><th class="py-3 px-3 w-1/4">已啟用聲學部位</th><th class="py-3 px-3 w-24">喇叭聲道上限</th><th class="py-3 px-3 text-right">管理操作</th></tr>
+              <tr><th class="py-3 px-2 w-20">圖片</th><th class="py-3 px-3 w-1/5">汽車品牌</th><th class="py-3 px-3 w-1/4">車款型號</th><th class="py-3 px-3 w-1/6">適用年份</th><th class="py-3 px-3 w-1/4">已啟用聲學部位</th><th class="py-3 px-3 whitespace-nowrap">喇叭聲道上限</th><th class="py-3 px-3 text-right">管理操作</th></tr>
             </thead>
             <tbody id="adminCarTableBody" class="divide-y divide-brand-border/60"></tbody>
           </table>
@@ -1059,24 +1059,28 @@
       const targetCar = carDb.find(c => c.brand === b && c.model === m && c.year === y);
       const allowedCategories = targetCar && targetCar.categories ? targetCar.categories : [];
 
+      const warningData = getCompatibilityWarnings();
+      const warnIconHtml = (id) => warningData.triggeringPartIds.has(id) ? `<span class="text-yellow-400 ml-1" title="此品項觸發相容性提示，詳見下方系統偵測提示">⚠️</span>` : '';
+
       const list = document.getElementById('sideItemList'); if (!list) return;
       list.innerHTML = ''; let total = 0;
       allowedCategories.forEach(key => {
         if(key === 'extras') return;
         const item = clientSelections[key];
-        if (item) { const price = getEffectivePrice(item); total += price; list.innerHTML += `<div class="flex justify-between items-start text-xs border-b border-brand-border/40 pb-2.5"><div><span class="text-[10px] text-brand-gold font-bold uppercase block">${(ACOUSTIC_CATEGORIES[key]||key).split(' ')[0]}</span><span class="text-neutral-200 font-medium block mt-0.5">${item.name}</span></div><span class="text-white font-mono font-bold shrink-0">NT$ ${price.toLocaleString()}</span></div>`; }
+        if (item) { const price = getEffectivePrice(item); total += price; list.innerHTML += `<div class="flex justify-between items-start text-xs border-b border-brand-border/40 pb-2.5"><div><span class="text-[10px] text-brand-gold font-bold uppercase block">${(ACOUSTIC_CATEGORIES[key]||key).split(' ')[0]}</span><span class="text-neutral-200 font-medium block mt-0.5">${item.name}${warnIconHtml(item.id)}</span></div><span class="text-white font-mono font-bold shrink-0">NT$ ${price.toLocaleString()}</span></div>`; }
       });
       if(allowedCategories.includes('extras') && clientSelections.extras) {
-        clientSelections.extras.forEach(item => { const price = getEffectivePrice(item); total += price; list.innerHTML += `<div class="flex justify-between items-start text-xs border-b border-brand-border/40 pb-2.5"><div><span class="text-[10px] text-neutral-400 font-bold uppercase block">專屬配件</span><span class="text-neutral-200 font-medium block mt-0.5">${item.name}</span></div><span class="text-white font-mono font-bold shrink-0">NT$ ${price.toLocaleString()}</span></div>`; });
+        clientSelections.extras.forEach(item => { const price = getEffectivePrice(item); total += price; list.innerHTML += `<div class="flex justify-between items-start text-xs border-b border-brand-border/40 pb-2.5"><div><span class="text-[10px] text-neutral-400 font-bold uppercase block">專屬配件</span><span class="text-neutral-200 font-medium block mt-0.5">${item.name}${warnIconHtml(item.id)}</span></div><span class="text-white font-mono font-bold shrink-0">NT$ ${price.toLocaleString()}</span></div>`; });
       }
       if (!list.innerHTML) list.innerHTML = '<div class="text-brand-textMuted text-center py-12 text-xs">您尚未勾選適用此車型的選配項目。</div>';
       const totalEl = document.getElementById('sideTotalPrice'); if (totalEl) totalEl.innerText = `NT$ ${total.toLocaleString()}`;
       updateAcousticWireframeMap();
       updateStep1CarImage(targetCar);
-      renderCompatibilityWarnings();
+      renderCompatibilityWarnings(warningData);
     }
 
-    // 智慧相容性防呆檢測：檢查目前選配是否有品項「需搭配的分類」尚未升級，回傳提示清單
+    // 智慧相容性防呆檢測：檢查目前選配是否有品項「需搭配的分類」尚未升級。
+    // 回傳去重後的提示文字清單（相同文字只顯示一次），以及所有觸發提示的品項 id（供明細旁標示警告圖示用）。
     function getCompatibilityWarnings() {
       const allowedCategories = getAllowedCategoriesForCurrentCar();
       const isCategoryUpgraded = (cat) => {
@@ -1084,21 +1088,21 @@
         const item = clientSelections[cat];
         return !!(item && Number(item.price) > 0);
       };
-      const warnings = [];
-      const seen = new Set();
+      const messages = new Set();
+      const triggeringPartIds = new Set();
       allowedCategories.forEach(cat => {
         const selectedItems = cat === 'extras' ? (clientSelections.extras || []) : (clientSelections[cat] ? [clientSelections[cat]] : []);
         selectedItems.forEach(part => {
-          if (!part || seen.has(part.id)) return;
+          if (!part) return;
           if (Number(part.price) <= 0) return;
           if (!part.compat_requires_categories || part.compat_requires_categories.length === 0 || !part.compat_message) return;
           const required = part.compat_requires_categories.filter(reqCat => allowedCategories.includes(reqCat));
           if (required.length === 0) return; // 此車款不提供任何建議搭配分類，略過提示
           const satisfied = required.some(reqCat => isCategoryUpgraded(reqCat));
-          if (!satisfied) { seen.add(part.id); warnings.push({ partName: part.name, message: part.compat_message }); }
+          if (!satisfied) { messages.add(part.compat_message); triggeringPartIds.add(part.id); }
         });
       });
-      return warnings;
+      return { messages: [...messages], triggeringPartIds };
     }
 
     // 智慧相容性防呆檢測：檢查目前選配的喇叭總數是否超出該車型設定的聲道上限
@@ -1119,14 +1123,15 @@
       return null;
     }
 
-    function renderCompatibilityWarnings() {
+    function renderCompatibilityWarnings(warningData) {
       const box = document.getElementById('compatWarningBox'); if (!box) return;
-      const warnings = getCompatibilityWarnings();
+      const data = warningData || getCompatibilityWarnings();
+      const messages = [...data.messages];
       const channelWarning = getSpeakerChannelWarning();
-      if (channelWarning) warnings.unshift(channelWarning);
-      if (warnings.length === 0) { box.innerHTML = ''; box.classList.add('hidden'); return; }
+      if (channelWarning) messages.unshift(channelWarning.message);
+      if (messages.length === 0) { box.innerHTML = ''; box.classList.add('hidden'); return; }
       box.classList.remove('hidden');
-      box.innerHTML = warnings.map(w => `<div class="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-[11px] text-yellow-300 leading-relaxed"><span class="shrink-0">⚠️</span><span><strong class="text-yellow-200">系統偵測：</strong>${w.message}</span></div>`).join('');
+      box.innerHTML = messages.map(msg => `<div class="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-[11px] text-yellow-300 leading-relaxed"><span class="shrink-0">⚠️</span><span><strong class="text-yellow-200">系統偵測：</strong>${msg}</span></div>`).join('');
     }
 
     // 依目前選定車型，於 Step01 卡片顯示對應車款圖片（作法與商品卡片一致：cover 滿版 + 品牌螢光綠由下往上漸層維持文字可讀性）
@@ -1397,7 +1402,7 @@
       const tbody = document.getElementById('adminCarTableBody'); if (!tbody) return;
       tbody.innerHTML = carDb.map(car => {
         const catTags = (car.categories || []).map(c => `<span class="inline-block bg-brand-darkBg px-1.5 py-0.5 rounded text-[10px] text-brand-gold mr-1 mb-1 border border-brand-border/50">${(ACOUSTIC_CATEGORIES[c]||c).split(' ')[0]}</span>`).join('');
-        return `<tr class="hover:bg-white/5 text-xs"><td class="py-3 px-2"><div class="flex flex-col items-center gap-1"><img src="${car.image_url || ''}" class="w-12 h-12 object-cover rounded-lg border border-brand-border bg-brand-darkBg ${car.image_url ? '' : 'hidden'}" id="carImg-${car.id}" onerror="this.classList.add('hidden')"><label class="text-[10px] text-brand-gold cursor-pointer hover:underline">更換<input type="file" accept="image/*" class="hidden" onchange="handleCarImageReplace(${car.id}, this)"></label></div></td><td class="py-3 px-3 font-bold text-brand-gold">${car.brand}</td><td class="py-3 px-3"><input type="text" value="${car.model}" onchange="updateCarInline(${car.id}, 'model', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td><td class="py-3 px-3"><input type="text" value="${car.year}" onchange="updateCarInline(${car.id}, 'year', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td><td class="py-3 px-3">${catTags}</td><td class="py-3 px-3"><input type="number" min="0" value="${car.max_speaker_channels != null ? car.max_speaker_channels : ''}" placeholder="不限" onchange="updateCarChannelLimit(${car.id}, this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td><td class="py-3 px-3 text-right whitespace-nowrap"><button onclick="openCarCategoryModal(${car.id})" class="bg-brand-gold/10 text-brand-gold hover:bg-brand-gold hover:text-black font-semibold px-2.5 py-1 rounded transition mr-2">⚙️ 設定部位</button><button onclick="_supabase.from('audio_cars').delete().eq('id',${car.id}).then(()=>fetchSysData())" class="text-red-400 hover:text-red-300">移除</button></td></tr>`;
+        return `<tr class="hover:bg-white/5 text-xs"><td class="py-3 px-2"><div class="flex flex-col items-center gap-1"><img src="${car.image_url || ''}" class="w-12 h-12 object-cover rounded-lg border border-brand-border bg-brand-darkBg ${car.image_url ? '' : 'hidden'}" id="carImg-${car.id}" onerror="this.classList.add('hidden')"><label class="text-[10px] text-brand-gold cursor-pointer hover:underline">更換<input type="file" accept="image/*" class="hidden" onchange="handleCarImageReplace(${car.id}, this)"></label></div></td><td class="py-3 px-3 font-bold text-brand-gold">${car.brand}</td><td class="py-3 px-3"><input type="text" value="${car.model}" onchange="updateCarInline(${car.id}, 'model', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td><td class="py-3 px-3"><input type="text" value="${car.year}" onchange="updateCarInline(${car.id}, 'year', this.value, this)" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-full transition"></td><td class="py-3 px-3">${catTags}</td><td class="py-3 px-3 whitespace-nowrap"><input type="number" min="0" value="${car.max_speaker_channels != null ? car.max_speaker_channels : ''}" placeholder="不限" onchange="updateCarChannelLimit(${car.id}, this.value, this)" style="min-width:72px;" class="bg-brand-darkBg border border-brand-border rounded p-1.5 text-white w-20 transition"></td><td class="py-3 px-3 text-right whitespace-nowrap"><button onclick="openCarCategoryModal(${car.id})" class="bg-brand-gold/10 text-brand-gold hover:bg-brand-gold hover:text-black font-semibold px-2.5 py-1 rounded transition mr-2">⚙️ 設定部位</button><button onclick="_supabase.from('audio_cars').delete().eq('id',${car.id}).then(()=>fetchSysData())" class="text-red-400 hover:text-red-300">移除</button></td></tr>`;
       }).join('');
     }
 
