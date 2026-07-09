@@ -72,3 +72,36 @@ button:not(.no-hover-lift):active,
 a:not(.site-nav-link):not(.no-hover-lift):active {
   transform: translateY(0);
 }
+
+/* ==================== 進場動畫：頁首、主內容各區塊、頁尾依序漸入 ====================
+   以 animation-fill-mode:both 讓元素在動畫開始前就維持 from 狀態（opacity:0），
+   避免 JS 尚未執行時的畫面閃爍。mainAdminPanel 有自己的顯示/隱藏轉場，故排除在外。 */
+@keyframes siteFadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+body > header,
+main > *,
+body > footer {
+  animation: siteFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+body > header { animation-delay: 0s; }
+main > *:nth-child(1) { animation-delay: 0.1s; }
+main > *:nth-child(2) { animation-delay: 0.2s; }
+main > *:nth-child(3) { animation-delay: 0.3s; }
+main > *:nth-child(4) { animation-delay: 0.4s; }
+main > *:nth-child(5) { animation-delay: 0.5s; }
+main > *:nth-child(6) { animation-delay: 0.6s; }
+main > *:nth-child(n+7) { animation-delay: 0.7s; }
+body > footer { animation-delay: 0.8s; }
+#mainAdminPanel { animation: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  body > header,
+  main > *,
+  body > footer {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
